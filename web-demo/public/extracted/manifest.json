@@ -1,0 +1,1107 @@
+{
+  "size": [
+    2283,
+    1302
+  ],
+  "layers": [
+    {
+      "name": "紙張",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        0,
+        0,
+        2283,
+        1302
+      ],
+      "parent": "root",
+      "depth": 0,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/000_紙張_1.png",
+      "index": 0
+    },
+    {
+      "name": "拆件",
+      "visible": true,
+      "is_group": true,
+      "bbox": [
+        0,
+        0,
+        2283,
+        1302
+      ],
+      "parent": "root",
+      "depth": 0,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": false,
+      "png": null,
+      "index": 1
+    },
+    {
+      "name": "拆",
+      "visible": true,
+      "is_group": true,
+      "bbox": [
+        62,
+        0,
+        2253,
+        1302
+      ],
+      "parent": "拆件",
+      "depth": 1,
+      "opacity": 255,
+      "blend_mode": "BlendMode.PASS_THROUGH",
+      "exported": false,
+      "png": null,
+      "index": 2
+    },
+    {
+      "name": "背景",
+      "visible": true,
+      "is_group": true,
+      "bbox": [
+        174,
+        0,
+        2253,
+        1302
+      ],
+      "parent": "拆",
+      "depth": 2,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": false,
+      "png": null,
+      "index": 3
+    },
+    {
+      "name": "背景",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        192,
+        78,
+        2112,
+        1158
+      ],
+      "parent": "背景",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/004_背景_1.png",
+      "index": 4
+    },
+    {
+      "name": "畫(四湯圓)",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        694,
+        252,
+        1018,
+        551
+      ],
+      "parent": "背景",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/005_畫四湯圓_1.png",
+      "index": 5
+    },
+    {
+      "name": "畫(婚叫)",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        1709,
+        484,
+        2103,
+        915
+      ],
+      "parent": "背景",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/006_畫婚叫_1.png",
+      "index": 6
+    },
+    {
+      "name": "氣球(後景)",
+      "visible": true,
+      "is_group": true,
+      "bbox": [
+        466,
+        81,
+        1180,
+        914
+      ],
+      "parent": "背景",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": false,
+      "png": null,
+      "index": 7
+    },
+    {
+      "name": "藍",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        837,
+        81,
+        1180,
+        840
+      ],
+      "parent": "氣球(後景)",
+      "depth": 4,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/008_藍_1.png",
+      "index": 8
+    },
+    {
+      "name": "粉",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        466,
+        126,
+        759,
+        914
+      ],
+      "parent": "氣球(後景)",
+      "depth": 4,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/009_粉_1.png",
+      "index": 9
+    },
+    {
+      "name": "掛帶",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        192,
+        78,
+        2112,
+        450
+      ],
+      "parent": "背景",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/010_掛帶_1.png",
+      "index": 10
+    },
+    {
+      "name": "窗光",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        286,
+        366,
+        1138,
+        1158
+      ],
+      "parent": "背景",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.OVERLAY",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/011_窗光_1.png",
+      "index": 11
+    },
+    {
+      "name": "氣球(中景)",
+      "visible": true,
+      "is_group": true,
+      "bbox": [
+        174,
+        0,
+        2253,
+        1302
+      ],
+      "parent": "背景",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": false,
+      "png": null,
+      "index": 12
+    },
+    {
+      "name": "B",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        174,
+        0,
+        2253,
+        1200
+      ],
+      "parent": "氣球(中景)",
+      "depth": 4,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/013_B_1.png",
+      "index": 13
+    },
+    {
+      "name": "A",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        1524,
+        549,
+        2020,
+        1302
+      ],
+      "parent": "氣球(中景)",
+      "depth": 4,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/014_A_1.png",
+      "index": 14
+    },
+    {
+      "name": "氣球(中景) 模糊",
+      "visible": false,
+      "is_group": false,
+      "bbox": [
+        238,
+        0,
+        2266,
+        1302
+      ],
+      "parent": "氣球(中景)",
+      "depth": 4,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/015_氣球中景_模糊_1.png",
+      "index": 15
+    },
+    {
+      "name": "彩帶片(後景)",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        291,
+        162,
+        1978,
+        1145
+      ],
+      "parent": "背景",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/016_彩帶片後景_1.png",
+      "index": 16
+    },
+    {
+      "name": "彩帶片(後景) 模糊",
+      "visible": false,
+      "is_group": false,
+      "bbox": [
+        277,
+        145,
+        2113,
+        1144
+      ],
+      "parent": "背景",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/017_彩帶片後景_模糊_1.png",
+      "index": 17
+    },
+    {
+      "name": "彩帶",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        192,
+        78,
+        1818,
+        462
+      ],
+      "parent": "背景",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/018_彩帶_1.png",
+      "index": 18
+    },
+    {
+      "name": "彩帶 模糊",
+      "visible": false,
+      "is_group": false,
+      "bbox": [
+        182,
+        68,
+        1826,
+        471
+      ],
+      "parent": "背景",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/019_彩帶_模糊_1.png",
+      "index": 19
+    },
+    {
+      "name": "歌 後景",
+      "visible": true,
+      "is_group": true,
+      "bbox": [
+        575,
+        73,
+        1840,
+        1234
+      ],
+      "parent": "拆",
+      "depth": 2,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": false,
+      "png": null,
+      "index": 20
+    },
+    {
+      "name": "腿",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        1314,
+        914,
+        1739,
+        1234
+      ],
+      "parent": "歌 後景",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/021_腿_1.png",
+      "index": 21
+    },
+    {
+      "name": "雙馬尾(左)",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        1302,
+        127,
+        1840,
+        816
+      ],
+      "parent": "歌 後景",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/022_雙馬尾左_1.png",
+      "index": 22
+    },
+    {
+      "name": "緞帶(左)",
+      "visible": true,
+      "is_group": true,
+      "bbox": [
+        1287,
+        73,
+        1456,
+        346
+      ],
+      "parent": "歌 後景",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": false,
+      "png": null,
+      "index": 23
+    },
+    {
+      "name": "圖層 56",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        1291,
+        212,
+        1456,
+        346
+      ],
+      "parent": "緞帶(左)",
+      "depth": 4,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/024_圖層_56_1.png",
+      "index": 24
+    },
+    {
+      "name": "圖層 55",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        1287,
+        73,
+        1406,
+        281
+      ],
+      "parent": "緞帶(左)",
+      "depth": 4,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/025_圖層_55_1.png",
+      "index": 25
+    },
+    {
+      "name": "雙馬尾(右)",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        575,
+        199,
+        1117,
+        884
+      ],
+      "parent": "歌 後景",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/026_雙馬尾右_1.png",
+      "index": 26
+    },
+    {
+      "name": "緞帶(右)",
+      "visible": true,
+      "is_group": true,
+      "bbox": [
+        986,
+        154,
+        1087,
+        450
+      ],
+      "parent": "歌 後景",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": false,
+      "png": null,
+      "index": 27
+    },
+    {
+      "name": "B",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        986,
+        282,
+        1087,
+        450
+      ],
+      "parent": "緞帶(右)",
+      "depth": 4,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/028_B_2.png",
+      "index": 28
+    },
+    {
+      "name": "A",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        988,
+        154,
+        1087,
+        356
+      ],
+      "parent": "緞帶(右)",
+      "depth": 4,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/029_A_2.png",
+      "index": 29
+    },
+    {
+      "name": "後髮",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        839,
+        120,
+        1614,
+        836
+      ],
+      "parent": "歌 後景",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/030_後髮_1.png",
+      "index": 30
+    },
+    {
+      "name": "右手",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        814,
+        474,
+        1318,
+        1181
+      ],
+      "parent": "歌 後景",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/031_右手_1.png",
+      "index": 31
+    },
+    {
+      "name": "禮物",
+      "visible": true,
+      "is_group": true,
+      "bbox": [
+        62,
+        554,
+        674,
+        1274
+      ],
+      "parent": "拆",
+      "depth": 2,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": false,
+      "png": null,
+      "index": 32
+    },
+    {
+      "name": "藍禮物",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        146,
+        554,
+        674,
+        1236
+      ],
+      "parent": "禮物",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/033_藍禮物_1.png",
+      "index": 33
+    },
+    {
+      "name": "紅禮物",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        62,
+        774,
+        557,
+        1274
+      ],
+      "parent": "禮物",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/034_紅禮物_1.png",
+      "index": 34
+    },
+    {
+      "name": "禮物 模糊",
+      "visible": false,
+      "is_group": false,
+      "bbox": [
+        56,
+        546,
+        681,
+        1281
+      ],
+      "parent": "禮物",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/035_禮物_模糊_1.png",
+      "index": 35
+    },
+    {
+      "name": "蛋糕",
+      "visible": true,
+      "is_group": true,
+      "bbox": [
+        430,
+        473,
+        1497,
+        1239
+      ],
+      "parent": "拆",
+      "depth": 2,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": false,
+      "png": null,
+      "index": 36
+    },
+    {
+      "name": "蛋糕",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        505,
+        473,
+        1381,
+        1181
+      ],
+      "parent": "蛋糕",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/037_蛋糕_1.png",
+      "index": 37
+    },
+    {
+      "name": "桌子",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        430,
+        1119,
+        1497,
+        1239
+      ],
+      "parent": "蛋糕",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/038_桌子_1.png",
+      "index": 38
+    },
+    {
+      "name": "桌子 模糊",
+      "visible": false,
+      "is_group": false,
+      "bbox": [
+        430,
+        1107,
+        1504,
+        1238
+      ],
+      "parent": "蛋糕",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/039_桌子_模糊_1.png",
+      "index": 39
+    },
+    {
+      "name": "彩帶(前景)",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        118,
+        582,
+        778,
+        1210
+      ],
+      "parent": "拆",
+      "depth": 2,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/040_彩帶前景_1.png",
+      "index": 40
+    },
+    {
+      "name": "彩帶(前景) 模糊",
+      "visible": false,
+      "is_group": false,
+      "bbox": [
+        111,
+        547,
+        778,
+        1208
+      ],
+      "parent": "拆",
+      "depth": 2,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/041_彩帶前景_模糊_1.png",
+      "index": 41
+    },
+    {
+      "name": "歌(前景)",
+      "visible": true,
+      "is_group": true,
+      "bbox": [
+        1017,
+        0,
+        1892,
+        1265
+      ],
+      "parent": "拆",
+      "depth": 2,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": false,
+      "png": null,
+      "index": 42
+    },
+    {
+      "name": "身體",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        1160,
+        347,
+        1892,
+        1150
+      ],
+      "parent": "歌(前景)",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/043_身體_1.png",
+      "index": 43
+    },
+    {
+      "name": "臉",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        1067,
+        131,
+        1339,
+        442
+      ],
+      "parent": "歌(前景)",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/044_臉_1.png",
+      "index": 44
+    },
+    {
+      "name": "前髮",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        1017,
+        0,
+        1470,
+        509
+      ],
+      "parent": "歌(前景)",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/045_前髮_1.png",
+      "index": 45
+    },
+    {
+      "name": "表情",
+      "visible": true,
+      "is_group": true,
+      "bbox": [
+        1090,
+        228,
+        1295,
+        408
+      ],
+      "parent": "歌(前景)",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": false,
+      "png": null,
+      "index": 46
+    },
+    {
+      "name": "A",
+      "visible": false,
+      "is_group": false,
+      "bbox": [
+        1092,
+        234,
+        1295,
+        421
+      ],
+      "parent": "表情",
+      "depth": 4,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/047_A_3.png",
+      "index": 47
+    },
+    {
+      "name": "B",
+      "visible": false,
+      "is_group": false,
+      "bbox": [
+        1094,
+        233,
+        1295,
+        416
+      ],
+      "parent": "表情",
+      "depth": 4,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/048_B_3.png",
+      "index": 48
+    },
+    {
+      "name": "C",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        1090,
+        228,
+        1295,
+        408
+      ],
+      "parent": "表情",
+      "depth": 4,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/049_C_1.png",
+      "index": 49
+    },
+    {
+      "name": "D",
+      "visible": false,
+      "is_group": false,
+      "bbox": [
+        1092,
+        234,
+        1295,
+        408
+      ],
+      "parent": "表情",
+      "depth": 4,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/050_D_1.png",
+      "index": 50
+    },
+    {
+      "name": "呆毛",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        1067,
+        60,
+        1130,
+        163
+      ],
+      "parent": "歌(前景)",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/051_呆毛_1.png",
+      "index": 51
+    },
+    {
+      "name": "左手",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        1160,
+        380,
+        1469,
+        1265
+      ],
+      "parent": "歌(前景)",
+      "depth": 3,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/052_左手_1.png",
+      "index": 52
+    },
+    {
+      "name": "彩帶片(前景)",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        270,
+        88,
+        2067,
+        1192
+      ],
+      "parent": "拆",
+      "depth": 2,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/053_彩帶片前景_1.png",
+      "index": 53
+    },
+    {
+      "name": "彩帶片(前景) 模糊",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        250,
+        76,
+        2020,
+        1190
+      ],
+      "parent": "拆",
+      "depth": 2,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/054_彩帶片前景_模糊_1.png",
+      "index": 54
+    },
+    {
+      "name": "婚叫",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        1786,
+        785,
+        2192,
+        1255
+      ],
+      "parent": "拆",
+      "depth": 2,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/055_婚叫_1.png",
+      "index": 55
+    },
+    {
+      "name": "婚叫(模糊)",
+      "visible": false,
+      "is_group": false,
+      "bbox": [
+        1781,
+        780,
+        2196,
+        1260
+      ],
+      "parent": "拆",
+      "depth": 2,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/056_婚叫模糊_1.png",
+      "index": 56
+    },
+    {
+      "name": "湯圓",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        921,
+        333,
+        1472,
+        574
+      ],
+      "parent": "拆",
+      "depth": 2,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/057_湯圓_1.png",
+      "index": 57
+    },
+    {
+      "name": "發光",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        0,
+        0,
+        2283,
+        1302
+      ],
+      "parent": "拆件",
+      "depth": 1,
+      "opacity": 255,
+      "blend_mode": "BlendMode.LINEAR_DODGE",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/058_發光_1.png",
+      "index": 58
+    },
+    {
+      "name": "濾鏡",
+      "visible": true,
+      "is_group": false,
+      "bbox": [
+        0,
+        0,
+        2283,
+        1302
+      ],
+      "parent": "拆件",
+      "depth": 1,
+      "opacity": 255,
+      "blend_mode": "BlendMode.COLOR",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/059_濾鏡_1.png",
+      "index": 59
+    },
+    {
+      "name": "完稿",
+      "visible": false,
+      "is_group": false,
+      "bbox": [
+        192,
+        78,
+        2112,
+        1158
+      ],
+      "parent": "root",
+      "depth": 0,
+      "opacity": 255,
+      "blend_mode": "BlendMode.NORMAL",
+      "exported": true,
+      "png": "/workspace/fan-support-project/extracted/layers/060_完稿_1.png",
+      "index": 60
+    }
+  ],
+  "preview_png": "/workspace/fan-support-project/extracted/full-composite.png"
+}
