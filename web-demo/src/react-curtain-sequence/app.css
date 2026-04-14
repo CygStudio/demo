@@ -1,0 +1,140 @@
+html,
+body,
+#app {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: Inter, 'Noto Sans TC', system-ui, sans-serif;
+  background: #1a1018;
+  color: #3c2c45;
+  overflow: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* ─── Fullscreen stage ─── */
+
+.rcs-stage {
+  position: relative;
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 14%, rgba(255,255,255,.96), rgba(255,255,255,.18) 42%, transparent 70%),
+    linear-gradient(180deg, rgba(255,246,251,.98), rgba(239,243,255,.96));
+}
+
+/* ─── Cover-scaled scene inner (bleed crop) ───
+ *
+ * Canvas: 2283×1302   Background: 1920×1080 at [192,78]
+ * BG center in canvas: x=50.46% y=47.47%
+ *
+ * Default: scale by width (landscape / wide viewports)
+ * Override: scale by height (portrait / tall viewports)
+ */
+
+.rcs-stage-inner {
+  position: absolute;
+  aspect-ratio: 2283 / 1302;
+  left: 50%;
+  top: 50%;
+
+  /* canvas/bg width ratio → BG fills viewport width */
+  width: calc(2283 / 1920 * 100%);
+  height: auto;
+
+  /* Center BG region (not canvas) in viewport */
+  transform:
+    translate(-50.46%, -47.47%)
+    translate3d(
+      calc(var(--mx, 0) * var(--parallax-px, -8px)),
+      calc(var(--my, 0) * var(--parallax-px, -8px)),
+      0
+    );
+}
+
+/* Tall viewports (< 16:9): scale by height instead */
+@media (max-aspect-ratio: 16/9) {
+  .rcs-stage-inner {
+    width: auto;
+    height: calc(1302 / 1080 * 100%);
+  }
+}
+
+.rcs-group,
+.rcs-expression-stack {
+  position: absolute;
+  inset: 0;
+}
+
+.rcs-stage img {
+  position: absolute;
+  object-fit: fill;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ─── Z-index scene stacking ─── */
+
+.has-scene-z-7 { z-index: 7; }
+.has-scene-z-10 { z-index: 10; }
+.has-scene-z-11 { z-index: 11; }
+.has-scene-z-12 { z-index: 12; }
+.has-scene-z-15 { z-index: 15; }
+
+.expression-layer {
+  opacity: 0;
+}
+
+.paper { z-index: 1; }
+.bg { z-index: 2; }
+.bg-decor { z-index: 3; }
+.light { z-index: 6; mix-blend-mode: screen; opacity: .58; }
+.balloons.back { z-index: 7; }
+.balloons.mid { z-index: 8; }
+.character.back { z-index: 10; }
+.props { z-index: 11; }
+.cake { z-index: 12; }
+.character.front,
+.expression-layer { z-index: 14; }
+.mascot.side,
+.mascot.cake { z-index: 15; }
+.fx { z-index: 18; mix-blend-mode: screen; }
+
+/* ─── Ghost: viewport-relative (bottom-right corner) ─── */
+
+.rcs-ghost-viewport {
+  position: absolute;
+  right: 3%;
+  bottom: 4%;
+  width: clamp(80px, 13vw, 220px);
+  aspect-ratio: 406 / 470;
+  z-index: 20;
+}
+
+.rcs-ghost-viewport img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ─── Mobile / portrait optimizations ─── */
+
+@media (max-aspect-ratio: 4/3) {
+  .rcs-stage-inner {
+    --parallax-px: -3px;
+  }
+
+  .rcs-ghost-viewport {
+    width: clamp(60px, 20vw, 160px);
+    right: 2%;
+    bottom: 3%;
+  }
+}
