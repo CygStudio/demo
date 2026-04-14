@@ -100,6 +100,7 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
   const [sequenceKey, setSequenceKey] = useState(0)
   const [pointer, setPointer] = useState({ x: 0, y: 0 })
   const [activeExpression, setActiveExpression] = useState(() => expressionLayers.findIndex((layer) => layer.className.includes('is-active')))
+  const [ghostEntryDone, setGhostEntryDone] = useState(false)
 
   const groupVariants = useMemo(
     () => ({
@@ -167,18 +168,20 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
         {renderGroup(curtainSceneGroups.fx)}
       </motion.div>
 
-      {/* Ghost positioned relative to viewport (bottom-right), outside scene crop */}
+      {/* Ghost positioned relative to viewport (bottom-right), PSD-proportional size, 80% visible */}
       <motion.div
         animate="visible"
         className="rcs-ghost-viewport"
         initial="hidden"
         key={`ghost-${sequenceKey}`}
         variants={groupVariants.ghost}
+        onAnimationComplete={() => setGhostEntryDone(true)}
       >
         {curtainSceneGroups.ghost.map((layer) => (
           <motion.img
             key={layer.name}
             alt={layer.name}
+            className={ghostEntryDone ? 'ghost-blurred' : ''}
             src={layer.src}
             animate={
               getLoopForLayer(layer.name)

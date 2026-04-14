@@ -93,6 +93,7 @@ body {
 .paper { z-index: 1; }
 .bg { z-index: 2; }
 .bg-decor { z-index: 3; }
+.decor { z-index: 5; }
 .light { z-index: 6; mix-blend-mode: screen; opacity: .58; }
 .balloons.back { z-index: 7; }
 .balloons.mid { z-index: 8; }
@@ -105,15 +106,17 @@ body {
 .mascot.cake { z-index: 15; }
 .fx { z-index: 18; mix-blend-mode: screen; }
 
-/* ─── Ghost: viewport-relative (bottom-right corner) ─── */
+/* ─── Ghost: viewport-relative, PSD-proportional size, 80% visible ─── */
 
 .rcs-ghost-viewport {
   position: absolute;
-  right: 3%;
-  bottom: 4%;
-  width: clamp(80px, 13vw, 220px);
+  right: -50px;
+  bottom: -50px;
+  /* width: clamp(140px, 21vw, 400px); */
+  width: clamp(300px, 21vw, 400px);
   aspect-ratio: 406 / 470;
   z-index: 20;
+  transform: translate(35%, 25%);
 }
 
 .rcs-ghost-viewport img {
@@ -123,6 +126,11 @@ body {
   object-fit: contain;
   pointer-events: none;
   user-select: none;
+  transition: filter 1.5s ease-in-out;
+}
+
+.rcs-ghost-viewport img.ghost-blurred {
+  filter: blur(3px);
 }
 
 /* ─── Mobile / portrait optimizations ─── */
@@ -133,8 +141,6 @@ body {
   }
 
   .rcs-ghost-viewport {
-    width: clamp(60px, 20vw, 160px);
-    right: 2%;
-    bottom: 3%;
+    /* width: clamp(120px, 18dvh, 240px); */
   }
 }

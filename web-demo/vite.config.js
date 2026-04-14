@@ -12,7 +12,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
-        reactCurtainSequence: resolve(import.meta.dirname, 'react-curtain-sequence/index.html'),
+        // reactCurtainSequence: resolve(import.meta.dirname, 'react-curtain-sequence/index.html'),
       },
     },
   },
