@@ -1,52 +1,56 @@
 import './style.css'
+import { getAppPathname, withBase } from './basePath'
 
 const BASE_W = 2283
 const BASE_H = 1302
 
+const assetPath = (path) => withBase(path)
+const routePath = (path = '') => withBase(path)
+
 const layerDefs = [
-  ['paper', 'paper', '/extracted/layers/000_紙張_1.png'],
-  ['bg', 'bg', '/extracted/layers/004_背景_1.png'],
-  ['wall-art-left', 'bg-decor', '/extracted/layers/005_畫四湯圓_1.png'],
-  ['wall-art-right', 'bg-decor', '/extracted/layers/006_畫婚叫_1.png'],
-  ['balloon-back-blue', 'balloons back', '/extracted/layers/008_藍_1.png'],
-  ['balloon-back-pink', 'balloons back', '/extracted/layers/009_粉_1.png'],
-  ['bunting', 'decor', '/extracted/layers/010_掛帶_1.png'],
-  ['window-light', 'light', '/extracted/layers/011_窗光_1.png'],
-  ['balloon-mid-b', 'balloons mid', '/extracted/layers/013_B_1.png'],
-  ['balloon-mid-a', 'balloons mid', '/extracted/layers/014_A_1.png'],
-  ['confetti-back', 'confetti back', '/extracted/layers/016_彩帶片後景_1.png'],
-  ['ribbon-back', 'decor', '/extracted/layers/018_彩帶_1.png'],
-  ['legs', 'character back', '/extracted/layers/021_腿_1.png'],
-  ['twin-left', 'character back', '/extracted/layers/022_雙馬尾左_1.png'],
-  ['ribbon-left-b', 'character back', '/extracted/layers/024_圖層_56_1.png'],
-  ['ribbon-left-a', 'character back', '/extracted/layers/025_圖層_55_1.png'],
-  ['twin-right', 'character back', '/extracted/layers/026_雙馬尾右_1.png'],
-  ['ribbon-right-b', 'character back', '/extracted/layers/028_B_2.png'],
-  ['ribbon-right-a', 'character back', '/extracted/layers/029_A_2.png'],
-  ['back-hair', 'character back', '/extracted/layers/030_後髮_1.png'],
-  ['right-arm', 'character back', '/extracted/layers/031_右手_1.png'],
-  ['gift-blue', 'props', '/extracted/layers/033_藍禮物_1.png'],
-  ['gift-red', 'props', '/extracted/layers/034_紅禮物_1.png'],
-  ['cake', 'cake', '/extracted/layers/037_蛋糕_1.png'],
-  ['table', 'cake', '/extracted/layers/038_桌子_1.png'],
-  ['ribbon-front-left', 'front ribbon', '/extracted/layers/040_彩帶前景_1.png'],
-  ['body', 'character front', '/extracted/layers/043_身體_1.png'],
-  ['face', 'character front', '/extracted/layers/044_臉_1.png'],
-  ['front-hair', 'character front', '/extracted/layers/045_前髮_1.png'],
-  ['ahoge', 'character front', '/extracted/layers/051_呆毛_1.png'],
-  ['left-arm', 'character front', '/extracted/layers/052_左手_1.png'],
-  ['confetti-front', 'confetti front', '/extracted/layers/053_彩帶片前景_1.png'],
-  ['ghost-right', 'mascot side', '/extracted/layers/055_婚叫_1.png'],
-  ['mascot-cake', 'mascot cake', '/extracted/layers/057_湯圓_1.png'],
-  ['glow', 'fx', '/extracted/layers/058_發光_1.png'],
-  ['filter', 'fx', '/extracted/layers/059_濾鏡_1.png'],
+  ['paper', 'paper', assetPath('extracted/layers/000_紙張_1.png')],
+  ['bg', 'bg', assetPath('extracted/layers/004_背景_1.png')],
+  ['wall-art-left', 'bg-decor', assetPath('extracted/layers/005_畫四湯圓_1.png')],
+  ['wall-art-right', 'bg-decor', assetPath('extracted/layers/006_畫婚叫_1.png')],
+  ['balloon-back-blue', 'balloons back', assetPath('extracted/layers/008_藍_1.png')],
+  ['balloon-back-pink', 'balloons back', assetPath('extracted/layers/009_粉_1.png')],
+  ['bunting', 'decor', assetPath('extracted/layers/010_掛帶_1.png')],
+  ['window-light', 'light', assetPath('extracted/layers/011_窗光_1.png')],
+  ['balloon-mid-b', 'balloons mid', assetPath('extracted/layers/013_B_1.png')],
+  ['balloon-mid-a', 'balloons mid', assetPath('extracted/layers/014_A_1.png')],
+  ['confetti-back', 'confetti back', assetPath('extracted/layers/016_彩帶片後景_1.png')],
+  ['ribbon-back', 'decor', assetPath('extracted/layers/018_彩帶_1.png')],
+  ['legs', 'character back', assetPath('extracted/layers/021_腿_1.png')],
+  ['twin-left', 'character back', assetPath('extracted/layers/022_雙馬尾左_1.png')],
+  ['ribbon-left-b', 'character back', assetPath('extracted/layers/024_圖層_56_1.png')],
+  ['ribbon-left-a', 'character back', assetPath('extracted/layers/025_圖層_55_1.png')],
+  ['twin-right', 'character back', assetPath('extracted/layers/026_雙馬尾右_1.png')],
+  ['ribbon-right-b', 'character back', assetPath('extracted/layers/028_B_2.png')],
+  ['ribbon-right-a', 'character back', assetPath('extracted/layers/029_A_2.png')],
+  ['back-hair', 'character back', assetPath('extracted/layers/030_後髮_1.png')],
+  ['right-arm', 'character back', assetPath('extracted/layers/031_右手_1.png')],
+  ['gift-blue', 'props', assetPath('extracted/layers/033_藍禮物_1.png')],
+  ['gift-red', 'props', assetPath('extracted/layers/034_紅禮物_1.png')],
+  ['cake', 'cake', assetPath('extracted/layers/037_蛋糕_1.png')],
+  ['table', 'cake', assetPath('extracted/layers/038_桌子_1.png')],
+  ['ribbon-front-left', 'front ribbon', assetPath('extracted/layers/040_彩帶前景_1.png')],
+  ['body', 'character front', assetPath('extracted/layers/043_身體_1.png')],
+  ['face', 'character front', assetPath('extracted/layers/044_臉_1.png')],
+  ['front-hair', 'character front', assetPath('extracted/layers/045_前髮_1.png')],
+  ['ahoge', 'character front', assetPath('extracted/layers/051_呆毛_1.png')],
+  ['left-arm', 'character front', assetPath('extracted/layers/052_左手_1.png')],
+  ['confetti-front', 'confetti front', assetPath('extracted/layers/053_彩帶片前景_1.png')],
+  ['ghost-right', 'mascot side', assetPath('extracted/layers/055_婚叫_1.png')],
+  ['mascot-cake', 'mascot cake', assetPath('extracted/layers/057_湯圓_1.png')],
+  ['glow', 'fx', assetPath('extracted/layers/058_發光_1.png')],
+  ['filter', 'fx', assetPath('extracted/layers/059_濾鏡_1.png')],
 ]
 
 const expressionDefs = [
-  ['expr-a', 'character front expression-layer', '/extracted/layers/047_A_3.png'],
-  ['expr-b', 'character front expression-layer', '/extracted/layers/048_B_3.png'],
-  ['expr-c', 'character front expression-layer is-active', '/extracted/layers/049_C_1.png'],
-  ['expr-d', 'character front expression-layer', '/extracted/layers/050_D_1.png'],
+  ['expr-a', 'character front expression-layer', assetPath('extracted/layers/047_A_3.png')],
+  ['expr-b', 'character front expression-layer', assetPath('extracted/layers/048_B_3.png')],
+  ['expr-c', 'character front expression-layer is-active', assetPath('extracted/layers/049_C_1.png')],
+  ['expr-d', 'character front expression-layer', assetPath('extracted/layers/050_D_1.png')],
 ]
 
 const layerBoxes = {
@@ -143,51 +147,51 @@ function buildExpressionHTML() {
 
 function buildCurtainCompositionHTML() {
   return `
-    <img class="layer paper" data-layer="paper" src="/extracted/layers/000_紙張_1.png" alt="paper" style="${inlineStyleFor('paper')}" />
-    <img class="layer bg" data-layer="bg" src="/extracted/layers/004_背景_1.png" alt="bg" style="${inlineStyleFor('bg')}" />
-    <img class="layer bg-decor" data-layer="wall-art-left" src="/extracted/layers/005_畫四湯圓_1.png" alt="wall-art-left" style="${inlineStyleFor('wall-art-left')}" />
-    <img class="layer bg-decor" data-layer="wall-art-right" src="/extracted/layers/006_畫婚叫_1.png" alt="wall-art-right" style="${inlineStyleFor('wall-art-right')}" />
-    <img class="layer decor" data-layer="bunting" src="/extracted/layers/010_掛帶_1.png" alt="bunting" style="${inlineStyleFor('bunting')}" />
-    <img class="layer light" data-layer="window-light" src="/extracted/layers/011_窗光_1.png" alt="window-light" style="${inlineStyleFor('window-light')}" />
+    <img class="layer paper" data-layer="paper" src="${assetPath('extracted/layers/000_紙張_1.png')}" alt="paper" style="${inlineStyleFor('paper')}" />
+    <img class="layer bg" data-layer="bg" src="${assetPath('extracted/layers/004_背景_1.png')}" alt="bg" style="${inlineStyleFor('bg')}" />
+    <img class="layer bg-decor" data-layer="wall-art-left" src="${assetPath('extracted/layers/005_畫四湯圓_1.png')}" alt="wall-art-left" style="${inlineStyleFor('wall-art-left')}" />
+    <img class="layer bg-decor" data-layer="wall-art-right" src="${assetPath('extracted/layers/006_畫婚叫_1.png')}" alt="wall-art-right" style="${inlineStyleFor('wall-art-right')}" />
+    <img class="layer decor" data-layer="bunting" src="${assetPath('extracted/layers/010_掛帶_1.png')}" alt="bunting" style="${inlineStyleFor('bunting')}" />
+    <img class="layer light" data-layer="window-light" src="${assetPath('extracted/layers/011_窗光_1.png')}" alt="window-light" style="${inlineStyleFor('window-light')}" />
     <div class="curtain-scene-layer curtain-character-group has-blur-layer" data-motion="character">
-      <img class="layer character back" data-layer="legs" src="/extracted/layers/021_腿_1.png" alt="legs" style="${inlineStyleFor('legs')}" />
-      <img class="layer character back" data-layer="twin-left" src="/extracted/layers/022_雙馬尾左_1.png" alt="twin-left" style="${inlineStyleFor('twin-left')}" />
-      <img class="layer character back" data-layer="ribbon-left-b" src="/extracted/layers/024_圖層_56_1.png" alt="ribbon-left-b" style="${inlineStyleFor('ribbon-left-b')}" />
-      <img class="layer character back" data-layer="ribbon-left-a" src="/extracted/layers/025_圖層_55_1.png" alt="ribbon-left-a" style="${inlineStyleFor('ribbon-left-a')}" />
-      <img class="layer character back" data-layer="twin-right" src="/extracted/layers/026_雙馬尾右_1.png" alt="twin-right" style="${inlineStyleFor('twin-right')}" />
-      <img class="layer character back" data-layer="ribbon-right-b" src="/extracted/layers/028_B_2.png" alt="ribbon-right-b" style="${inlineStyleFor('ribbon-right-b')}" />
-      <img class="layer character back" data-layer="ribbon-right-a" src="/extracted/layers/029_A_2.png" alt="ribbon-right-a" style="${inlineStyleFor('ribbon-right-a')}" />
-      <img class="layer character back" data-layer="back-hair" src="/extracted/layers/030_後髮_1.png" alt="back-hair" style="${inlineStyleFor('back-hair')}" />
-      <img class="layer character back" data-layer="right-arm" src="/extracted/layers/031_右手_1.png" alt="right-arm" style="${inlineStyleFor('right-arm')}" />
-      <img class="layer character front" data-layer="body" src="/extracted/layers/043_身體_1.png" alt="body" style="${inlineStyleFor('body')}" />
-      <img class="layer character front" data-layer="face" src="/extracted/layers/044_臉_1.png" alt="face" style="${inlineStyleFor('face')}" />
+      <img class="layer character back" data-layer="legs" src="${assetPath('extracted/layers/021_腿_1.png')}" alt="legs" style="${inlineStyleFor('legs')}" />
+      <img class="layer character back" data-layer="twin-left" src="${assetPath('extracted/layers/022_雙馬尾左_1.png')}" alt="twin-left" style="${inlineStyleFor('twin-left')}" />
+      <img class="layer character back" data-layer="ribbon-left-b" src="${assetPath('extracted/layers/024_圖層_56_1.png')}" alt="ribbon-left-b" style="${inlineStyleFor('ribbon-left-b')}" />
+      <img class="layer character back" data-layer="ribbon-left-a" src="${assetPath('extracted/layers/025_圖層_55_1.png')}" alt="ribbon-left-a" style="${inlineStyleFor('ribbon-left-a')}" />
+      <img class="layer character back" data-layer="twin-right" src="${assetPath('extracted/layers/026_雙馬尾右_1.png')}" alt="twin-right" style="${inlineStyleFor('twin-right')}" />
+      <img class="layer character back" data-layer="ribbon-right-b" src="${assetPath('extracted/layers/028_B_2.png')}" alt="ribbon-right-b" style="${inlineStyleFor('ribbon-right-b')}" />
+      <img class="layer character back" data-layer="ribbon-right-a" src="${assetPath('extracted/layers/029_A_2.png')}" alt="ribbon-right-a" style="${inlineStyleFor('ribbon-right-a')}" />
+      <img class="layer character back" data-layer="back-hair" src="${assetPath('extracted/layers/030_後髮_1.png')}" alt="back-hair" style="${inlineStyleFor('back-hair')}" />
+      <img class="layer character back" data-layer="right-arm" src="${assetPath('extracted/layers/031_右手_1.png')}" alt="right-arm" style="${inlineStyleFor('right-arm')}" />
+      <img class="layer character front" data-layer="body" src="${assetPath('extracted/layers/043_身體_1.png')}" alt="body" style="${inlineStyleFor('body')}" />
+      <img class="layer character front" data-layer="face" src="${assetPath('extracted/layers/044_臉_1.png')}" alt="face" style="${inlineStyleFor('face')}" />
       <div class="expression-stack">${buildExpressionHTML()}</div>
-      <img class="layer character front" data-layer="front-hair" src="/extracted/layers/045_前髮_1.png" alt="front-hair" style="${inlineStyleFor('front-hair')}" />
-      <img class="layer character front" data-layer="ahoge" src="/extracted/layers/051_呆毛_1.png" alt="ahoge" style="${inlineStyleFor('ahoge')}" />
-      <img class="layer character front" data-layer="left-arm" src="/extracted/layers/052_左手_1.png" alt="left-arm" style="${inlineStyleFor('left-arm')}" />
+      <img class="layer character front" data-layer="front-hair" src="${assetPath('extracted/layers/045_前髮_1.png')}" alt="front-hair" style="${inlineStyleFor('front-hair')}" />
+      <img class="layer character front" data-layer="ahoge" src="${assetPath('extracted/layers/051_呆毛_1.png')}" alt="ahoge" style="${inlineStyleFor('ahoge')}" />
+      <img class="layer character front" data-layer="left-arm" src="${assetPath('extracted/layers/052_左手_1.png')}" alt="left-arm" style="${inlineStyleFor('left-arm')}" />
     </div>
     <div class="curtain-scene-layer curtain-cake-group has-blur-layer" data-motion="cake">
-      <img class="layer cake" data-layer="cake" src="/extracted/layers/037_蛋糕_1.png" alt="cake" style="${inlineStyleFor('cake')}" />
-      <img class="layer cake" data-layer="table" src="/extracted/layers/038_桌子_1.png" alt="table" style="${inlineStyleFor('table')}" />
+      <img class="layer cake" data-layer="cake" src="${assetPath('extracted/layers/037_蛋糕_1.png')}" alt="cake" style="${inlineStyleFor('cake')}" />
+      <img class="layer cake" data-layer="table" src="${assetPath('extracted/layers/038_桌子_1.png')}" alt="table" style="${inlineStyleFor('table')}" />
     </div>
     <div class="curtain-scene-layer curtain-balloon-group has-blur-layer" data-motion="balloons">
-      <img class="layer balloons back" data-layer="balloon-back-blue" src="/extracted/layers/008_藍_1.png" alt="balloon-back-blue" style="${inlineStyleFor('balloon-back-blue')}" />
-      <img class="layer balloons back" data-layer="balloon-back-pink" src="/extracted/layers/009_粉_1.png" alt="balloon-back-pink" style="${inlineStyleFor('balloon-back-pink')}" />
-      <img class="layer balloons mid" data-layer="balloon-mid-b" src="/extracted/layers/013_B_1.png" alt="balloon-mid-b" style="${inlineStyleFor('balloon-mid-b')}" />
-      <img class="layer balloons mid" data-layer="balloon-mid-a" src="/extracted/layers/014_A_1.png" alt="balloon-mid-a" style="${inlineStyleFor('balloon-mid-a')}" />
+      <img class="layer balloons back" data-layer="balloon-back-blue" src="${assetPath('extracted/layers/008_藍_1.png')}" alt="balloon-back-blue" style="${inlineStyleFor('balloon-back-blue')}" />
+      <img class="layer balloons back" data-layer="balloon-back-pink" src="${assetPath('extracted/layers/009_粉_1.png')}" alt="balloon-back-pink" style="${inlineStyleFor('balloon-back-pink')}" />
+      <img class="layer balloons mid" data-layer="balloon-mid-b" src="${assetPath('extracted/layers/013_B_1.png')}" alt="balloon-mid-b" style="${inlineStyleFor('balloon-mid-b')}" />
+      <img class="layer balloons mid" data-layer="balloon-mid-a" src="${assetPath('extracted/layers/014_A_1.png')}" alt="balloon-mid-a" style="${inlineStyleFor('balloon-mid-a')}" />
     </div>
     <div class="curtain-scene-layer curtain-gift-group has-blur-layer" data-motion="gifts">
-      <img class="layer props" data-layer="gift-blue" src="/extracted/layers/033_藍禮物_1.png" alt="gift-blue" style="${inlineStyleFor('gift-blue')}" />
-      <img class="layer props" data-layer="gift-red" src="/extracted/layers/034_紅禮物_1.png" alt="gift-red" style="${inlineStyleFor('gift-red')}" />
+      <img class="layer props" data-layer="gift-blue" src="${assetPath('extracted/layers/033_藍禮物_1.png')}" alt="gift-blue" style="${inlineStyleFor('gift-blue')}" />
+      <img class="layer props" data-layer="gift-red" src="${assetPath('extracted/layers/034_紅禮物_1.png')}" alt="gift-red" style="${inlineStyleFor('gift-red')}" />
     </div>
     <div class="curtain-scene-layer curtain-ghost-group has-blur-layer" data-motion="ghost">
-      <img class="layer mascot side" data-layer="ghost-right" src="/extracted/layers/055_婚叫_1.png" alt="ghost-right" style="${inlineStyleFor('ghost-right')}" />
+      <img class="layer mascot side" data-layer="ghost-right" src="${assetPath('extracted/layers/055_婚叫_1.png')}" alt="ghost-right" style="${inlineStyleFor('ghost-right')}" />
     </div>
     <div class="curtain-scene-layer curtain-mascot-group" data-motion="mascot">
-      <img class="layer mascot cake" data-layer="mascot-cake" src="/extracted/layers/057_湯圓_1.png" alt="mascot-cake" style="${inlineStyleFor('mascot-cake')}" />
+      <img class="layer mascot cake" data-layer="mascot-cake" src="${assetPath('extracted/layers/057_湯圓_1.png')}" alt="mascot-cake" style="${inlineStyleFor('mascot-cake')}" />
     </div>
-    <img class="layer fx" data-layer="glow" src="/extracted/layers/058_發光_1.png" alt="glow" style="${inlineStyleFor('glow')}" />
-    <img class="layer fx" data-layer="filter" src="/extracted/layers/059_濾鏡_1.png" alt="filter" style="${inlineStyleFor('filter')}" />
+    <img class="layer fx" data-layer="glow" src="${assetPath('extracted/layers/058_發光_1.png')}" alt="glow" style="${inlineStyleFor('glow')}" />
+    <img class="layer fx" data-layer="filter" src="${assetPath('extracted/layers/059_濾鏡_1.png')}" alt="filter" style="${inlineStyleFor('filter')}" />
   `
 }
 
@@ -235,9 +239,9 @@ function renderOriginalDemo() {
           <p class="lead">以實際 PSD 拆件素材組成，提供 10 個偏插畫、療癒、粉絲應援企劃的網頁動畫版本，並兼顧 RWD。</p>
         </div>
         <nav class="route-nav">
-          <a class="route-link active" href="/">原版 demo</a>
-          <a class="route-link" href="/entrance/">01 進場提案</a>
-          <a class="route-link" href="/curtain-sequence/">02 進場序列</a>
+          <a class="route-link active" href="${routePath()}">原版 demo</a>
+          <a class="route-link" href="${routePath('entrance/')}">01 進場提案</a>
+          <a class="route-link" href="${routePath('curtain-sequence/')}">02 進場序列</a>
         </nav>
         <div class="variant-list" id="variant-list"></div>
         <div class="notes">
@@ -315,9 +319,9 @@ function renderEntranceDemo() {
           <p class="lead">保留原本的柔和浮動基調，專注比較不同的進場、揭露與轉場語言，方便你評估哪種最適合粉絲應援企劃首頁。</p>
         </div>
         <nav class="route-nav">
-          <a class="route-link" href="/">原版 demo</a>
-          <a class="route-link active" href="/entrance/">01 進場提案</a>
-          <a class="route-link" href="/curtain-sequence/">02 進場序列</a>
+          <a class="route-link" href="${routePath()}">原版 demo</a>
+          <a class="route-link active" href="${routePath('entrance/')}">01 進場提案</a>
+          <a class="route-link" href="${routePath('curtain-sequence/')}">02 進場序列</a>
         </nav>
         <div class="variant-list" id="entrance-list"></div>
         <div class="notes">
@@ -425,9 +429,9 @@ function renderCurtainSequenceDemo() {
           <p class="lead">人物作為完整一組先淡入，接著以視差與時間差帶入蛋糕、氣球、禮物、婚叫、湯圓。主進程結束後進入維持效果，並讓表情每 3 秒淡入淡出切換。</p>
         </div>
         <nav class="route-nav">
-          <a class="route-link" href="/">原版 demo</a>
-          <a class="route-link" href="/entrance/">01 進場提案</a>
-          <a class="route-link active" href="/curtain-sequence/">02 進場序列</a>
+          <a class="route-link" href="${routePath()}">原版 demo</a>
+          <a class="route-link" href="${routePath('entrance/')}">01 進場提案</a>
+          <a class="route-link active" href="${routePath('curtain-sequence/')}">02 進場序列</a>
         </nav>
         <div class="notes">
           <h2>進入順序</h2>
@@ -482,9 +486,11 @@ function renderCurtainSequenceDemo() {
   }, { once: true })
 }
 
-if (window.location.pathname.startsWith('/curtain-sequence')) {
+const currentAppPath = getAppPathname()
+
+if (currentAppPath.startsWith('/curtain-sequence')) {
   renderCurtainSequenceDemo()
-} else if (window.location.pathname.startsWith('/entrance')) {
+} else if (currentAppPath.startsWith('/entrance')) {
   renderEntranceDemo()
 } else {
   renderOriginalDemo()
