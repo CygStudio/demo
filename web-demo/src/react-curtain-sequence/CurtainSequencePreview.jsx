@@ -1,6 +1,6 @@
 import React from 'react'
-import { motion } from 'motion/react'
-import { useEffect, useMemo, useState } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { curtainSceneGroups, expressionLayers, getLayerStyle } from './sceneData'
 import { loopMotion, sequenceOrder } from './sequenceConfig'
 
@@ -96,7 +96,44 @@ const groupSceneClasses = {
   mascot: 'has-scene-z-15',
 }
 
+/** Collect all image srcs that must be loaded before starting the sequence */
+function collectCriticalSrcs() {
+  const srcs = []
+  for (const layer of curtainSceneGroups.background) srcs.push(layer.src)
+  for (const layer of curtainSceneGroups.character) srcs.push(layer.src)
+  for (const layer of expressionLayers) srcs.push(layer.src)
+  return srcs
+}
+
+function usePreloadImages(srcs) {
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    const promises = srcs.map(
+      (src) =>
+        new Promise((resolve) => {
+          const img = new Image()
+          img.onload = resolve
+          img.onerror = resolve
+          img.src = src
+        }),
+    )
+    Promise.all(promises).then(() => {
+      if (!cancelled) setReady(true)
+    })
+    return () => { cancelled = true }
+  }, [srcs])
+
+  return ready
+}
+
 export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) {
+  const criticalSrcs = useMemo(collectCriticalSrcs, [])
+  const assetsReady = usePreloadImages(criticalSrcs)
+  const [lightRasterDone, setLightRasterDone] = useState(false)
+  const showSequence = assetsReady && lightRasterDone
+
   const [sequenceKey, setSequenceKey] = useState(0)
   const [pointer, setPointer] = useState({ x: 0, y: 0 })
   const [activeExpression, setActiveExpression] = useState(() => expressionLayers.findIndex((layer) => layer.className.includes('is-active')))
@@ -135,7 +172,7 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
 
   return (
     <div
-      className="rcs-stage"
+      className={`rcs-stage ${!showSequence ? 'rcs-stage--loading' : ''}`}
       data-sequence-key={sequenceKey}
       data-testid="curtain-stage"
       onPointerLeave={handlePointerLeave}
@@ -145,23 +182,23 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
       <motion.div className="rcs-stage-inner" initial={false} key={sequenceKey}>
         {renderGroup(curtainSceneGroups.background)}
 
-        <motion.div animate="visible" className={`rcs-group rcs-group-character ${groupSceneClasses.character}`} initial="hidden" variants={groupVariants.character}>
+        <motion.div animate={showSequence ? 'visible' : 'hidden'} className={`rcs-group rcs-group-character ${groupSceneClasses.character}`} initial="hidden" variants={groupVariants.character}>
           {renderGroup(curtainSceneGroups.character)}
           <div className="rcs-expression-stack">
             {renderGroup(expressionLayers, { activeExpression, isExpression: true })}
           </div>
         </motion.div>
 
-        <motion.div animate="visible" className={`rcs-group rcs-group-cake ${groupSceneClasses.cake}`} initial="hidden" variants={groupVariants.cake}>
+        <motion.div animate={showSequence ? 'visible' : 'hidden'} className={`rcs-group rcs-group-cake ${groupSceneClasses.cake}`} initial="hidden" variants={groupVariants.cake}>
           {renderGroup(curtainSceneGroups.cake)}
         </motion.div>
-        <motion.div animate="visible" className={`rcs-group rcs-group-balloons ${groupSceneClasses.balloons}`} initial="hidden" variants={groupVariants.balloons}>
+        <motion.div animate={showSequence ? 'visible' : 'hidden'} className={`rcs-group rcs-group-balloons ${groupSceneClasses.balloons}`} initial="hidden" variants={groupVariants.balloons}>
           {renderGroup(curtainSceneGroups.balloons)}
         </motion.div>
-        <motion.div animate="visible" className={`rcs-group rcs-group-gifts ${groupSceneClasses.gifts}`} initial="hidden" variants={groupVariants.gifts}>
+        <motion.div animate={showSequence ? 'visible' : 'hidden'} className={`rcs-group rcs-group-gifts ${groupSceneClasses.gifts}`} initial="hidden" variants={groupVariants.gifts}>
           {renderGroup(curtainSceneGroups.gifts)}
         </motion.div>
-        <motion.div animate="visible" className={`rcs-group rcs-group-mascot ${groupSceneClasses.mascot}`} initial="hidden" variants={groupVariants.mascot}>
+        <motion.div animate={showSequence ? 'visible' : 'hidden'} className={`rcs-group rcs-group-mascot ${groupSceneClasses.mascot}`} initial="hidden" variants={groupVariants.mascot}>
           {renderGroup(curtainSceneGroups.mascot)}
         </motion.div>
 
@@ -170,12 +207,12 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
 
       {/* Ghost positioned relative to viewport (bottom-right), PSD-proportional size, 80% visible */}
       <motion.div
-        animate="visible"
+        animate={showSequence ? 'visible' : 'hidden'}
         className="rcs-ghost-viewport"
         initial="hidden"
         key={`ghost-${sequenceKey}`}
         variants={groupVariants.ghost}
-        onAnimationComplete={() => setGhostEntryDone(true)}
+        onAnimationComplete={() => { if (showSequence) setGhostEntryDone(true) }}
       >
         {curtainSceneGroups.ghost.map((layer) => (
           <motion.img
@@ -191,6 +228,38 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
           />
         ))}
       </motion.div>
+
+      {/* Light raster entrance overlay */}
+      <AnimatePresence>
+        {!lightRasterDone && (
+          <motion.div
+            className="rcs-light-raster"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <motion.div
+              className="rcs-light-raster__beam rcs-light-raster__beam--1"
+              initial={{ x: '-110%' }}
+              animate={assetsReady ? { x: '110%' } : { x: '-110%' }}
+              transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
+            />
+            <motion.div
+              className="rcs-light-raster__beam rcs-light-raster__beam--2"
+              initial={{ x: '110%' }}
+              animate={assetsReady ? { x: '-110%' } : { x: '110%' }}
+              transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+            />
+            <motion.div
+              className="rcs-light-raster__beam rcs-light-raster__beam--3"
+              initial={{ x: '-110%' }}
+              animate={assetsReady ? { x: '110%' } : { x: '-110%' }}
+              transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
+              onAnimationComplete={() => { if (assetsReady) setLightRasterDone(true) }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
