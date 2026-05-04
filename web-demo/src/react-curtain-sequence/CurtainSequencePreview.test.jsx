@@ -1,7 +1,11 @@
 import React from 'react'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import CurtainSequencePreview from './CurtainSequencePreview'
+
+const appStyles = readFileSync(resolve(import.meta.dirname, 'app.css'), 'utf8')
 
 describe('CurtainSequencePreview', () => {
   it('renders core scene groups and images', () => {
@@ -14,6 +18,39 @@ describe('CurtainSequencePreview', () => {
 
     expect(document.querySelector('.rcs-group-character')).toBeInTheDocument()
     expect(document.querySelector('.rcs-group-cake')).toBeInTheDocument()
+  })
+
+  it('renders the artist credit with a safe external link', () => {
+    render(<CurtainSequencePreview />)
+
+    const artistLink = screen.getByRole('link', { name: '奶油醬油' })
+    expect(artistLink.closest('p')).toHaveTextContent('Art by 奶油醬油 老師')
+    expect(artistLink).toHaveAttribute('href', 'https://x.com/CSS74134570')
+    expect(artistLink).toHaveAttribute('target', '_blank')
+    expect(artistLink).toHaveAttribute('rel', expect.stringContaining('noopener'))
+    expect(artistLink).toHaveAttribute('rel', expect.stringContaining('noreferrer'))
+  })
+
+  it('keeps the artist credit layered above the light raster overlay', () => {
+    const style = document.createElement('style')
+    style.textContent = appStyles
+    document.head.appendChild(style)
+
+    try {
+      render(<CurtainSequencePreview />)
+
+      const artistCredit = document.querySelector('.rcs-artist-credit')
+      const lightRaster = document.querySelector('.rcs-light-raster')
+      const rasterZIndex = Number.parseInt(window.getComputedStyle(lightRaster).zIndex, 10)
+      const artistCreditZIndex = Number.parseInt(window.getComputedStyle(artistCredit).zIndex, 10)
+
+      expect(artistCredit).toBeInTheDocument()
+      expect(lightRaster).toBeInTheDocument()
+      expect(rasterZIndex).toBe(100)
+      expect(artistCreditZIndex).toBeGreaterThan(100)
+    } finally {
+      style.remove()
+    }
   })
 
   it('preserves the original scene stacking order on group wrappers', () => {

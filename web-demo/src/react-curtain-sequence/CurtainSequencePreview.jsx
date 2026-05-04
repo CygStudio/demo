@@ -260,6 +260,14 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
           </motion.div>
         )}
       </AnimatePresence>
+
+      <p className="rcs-artist-credit">
+        Art by{' '}
+        <a href="https://x.com/CSS74134570" rel="noopener noreferrer" target="_blank">
+          奶油醬油
+        </a>{' '}
+        老師
+      </p>
     </div>
   )
 }
