@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "build:optimized-assets": "node scripts/build-optimized-assets.mjs"
   },
   "dependencies": {
     "motion": "^12.23.24",
@@ -22,6 +23,7 @@
     "@testing-library/react": "^16.3.0",
     "@vitejs/plugin-react": "^5.1.0",
     "jsdom": "^26.1.0",
+    "sharp": "^0.34.5",
     "vite": "^8.0.4",
     "vitest": "^3.2.4"
   }

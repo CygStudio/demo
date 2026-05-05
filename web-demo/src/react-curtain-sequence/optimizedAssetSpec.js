@@ -1,4 +1,4 @@
-import { layerBoxes } from './sceneGeometry'
+import { layerBoxes } from './sceneGeometry.js'
 
 const source = (name, file) => ({ name, file, box: layerBoxes[name] })
 

@@ -1,0 +1,257 @@
+{
+  "generatedBy": "web-demo/scripts/build-optimized-assets.mjs",
+  "critical": [
+    "scene-base",
+    "character-hair-back",
+    "character-body",
+    "character-hair-front",
+    "expression-atlas"
+  ],
+  "assets": [
+    {
+      "name": "scene-base",
+      "type": "composite",
+      "box": [
+        0,
+        0,
+        2283,
+        1302
+      ],
+      "width": 2283,
+      "height": 1302,
+      "className": "layer optimized-scene-base",
+      "loop": null,
+      "activeFrame": null,
+      "frameNames": null,
+      "formats": {
+        "png": "extracted/optimized/scene-base.png",
+        "webp": "extracted/optimized/scene-base.webp"
+      }
+    },
+    {
+      "name": "character-hair-back",
+      "type": "composite",
+      "box": [
+        575,
+        73,
+        1840,
+        1234
+      ],
+      "width": 1265,
+      "height": 1161,
+      "className": "layer character back",
+      "loop": "hair",
+      "activeFrame": null,
+      "frameNames": null,
+      "formats": {
+        "png": "extracted/optimized/character-hair-back.png",
+        "webp": "extracted/optimized/character-hair-back.webp"
+      }
+    },
+    {
+      "name": "character-body",
+      "type": "composite",
+      "box": [
+        814,
+        131,
+        1892,
+        1265
+      ],
+      "width": 1078,
+      "height": 1134,
+      "className": "layer character front",
+      "loop": "breathe",
+      "activeFrame": null,
+      "frameNames": null,
+      "formats": {
+        "png": "extracted/optimized/character-body.png",
+        "webp": "extracted/optimized/character-body.webp"
+      }
+    },
+    {
+      "name": "character-hair-front",
+      "type": "composite",
+      "box": [
+        1017,
+        0,
+        1470,
+        509
+      ],
+      "width": 453,
+      "height": 509,
+      "className": "layer character front",
+      "loop": "hair",
+      "activeFrame": null,
+      "frameNames": null,
+      "formats": {
+        "png": "extracted/optimized/character-hair-front.png",
+        "webp": "extracted/optimized/character-hair-front.webp"
+      }
+    },
+    {
+      "name": "expression-atlas",
+      "type": "atlas",
+      "box": [
+        1090,
+        228,
+        1295,
+        421
+      ],
+      "width": 205,
+      "height": 193,
+      "className": "layer character front expression-layer",
+      "loop": null,
+      "activeFrame": "expr-c",
+      "frameNames": [
+        "expr-a",
+        "expr-b",
+        "expr-c",
+        "expr-d"
+      ],
+      "formats": {
+        "png": "extracted/optimized/expression-atlas.png",
+        "webp": "extracted/optimized/expression-atlas.webp"
+      }
+    },
+    {
+      "name": "cake-table",
+      "type": "composite",
+      "box": [
+        430,
+        473,
+        1497,
+        1239
+      ],
+      "width": 1067,
+      "height": 766,
+      "className": "layer cake",
+      "loop": null,
+      "activeFrame": null,
+      "frameNames": null,
+      "formats": {
+        "png": "extracted/optimized/cake-table.png",
+        "webp": "extracted/optimized/cake-table.webp"
+      }
+    },
+    {
+      "name": "balloons",
+      "type": "composite",
+      "box": [
+        174,
+        0,
+        2253,
+        1302
+      ],
+      "width": 2079,
+      "height": 1302,
+      "className": "layer balloons",
+      "loop": "balloons",
+      "activeFrame": null,
+      "frameNames": null,
+      "formats": {
+        "png": "extracted/optimized/balloons.png",
+        "webp": "extracted/optimized/balloons.webp"
+      }
+    },
+    {
+      "name": "gifts",
+      "type": "composite",
+      "box": [
+        62,
+        554,
+        674,
+        1274
+      ],
+      "width": 612,
+      "height": 720,
+      "className": "layer props",
+      "loop": "gifts",
+      "activeFrame": null,
+      "frameNames": null,
+      "formats": {
+        "png": "extracted/optimized/gifts.png",
+        "webp": "extracted/optimized/gifts.webp"
+      }
+    },
+    {
+      "name": "ghost-right",
+      "type": "standalone",
+      "box": [
+        1786,
+        785,
+        2192,
+        1255
+      ],
+      "width": 406,
+      "height": 470,
+      "className": "layer mascot side",
+      "loop": "ghost",
+      "activeFrame": null,
+      "frameNames": null,
+      "formats": {
+        "png": "extracted/optimized/ghost-right.png",
+        "webp": "extracted/optimized/ghost-right.webp"
+      }
+    },
+    {
+      "name": "mascot-cake",
+      "type": "standalone",
+      "box": [
+        921,
+        333,
+        1472,
+        574
+      ],
+      "width": 551,
+      "height": 241,
+      "className": "layer mascot cake",
+      "loop": null,
+      "activeFrame": null,
+      "frameNames": null,
+      "formats": {
+        "png": "extracted/optimized/mascot-cake.png",
+        "webp": "extracted/optimized/mascot-cake.webp"
+      }
+    },
+    {
+      "name": "glow",
+      "type": "standalone",
+      "box": [
+        0,
+        0,
+        2283,
+        1302
+      ],
+      "width": 2283,
+      "height": 1302,
+      "className": "layer fx",
+      "loop": "glow",
+      "activeFrame": null,
+      "frameNames": null,
+      "formats": {
+        "png": "extracted/optimized/glow.png",
+        "webp": "extracted/optimized/glow.webp"
+      }
+    },
+    {
+      "name": "filter",
+      "type": "standalone",
+      "box": [
+        0,
+        0,
+        2283,
+        1302
+      ],
+      "width": 2283,
+      "height": 1302,
+      "className": "layer fx",
+      "loop": null,
+      "activeFrame": null,
+      "frameNames": null,
+      "formats": {
+        "png": "extracted/optimized/filter.png",
+        "webp": "extracted/optimized/filter.webp"
+      }
+    }
+  ]
+}
