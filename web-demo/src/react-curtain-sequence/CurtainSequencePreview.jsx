@@ -6,6 +6,10 @@ import {
   expressionAtlas,
   optimizedCurtainSceneGroups,
 } from './optimizedSceneData'
+import {
+  getExpressionAtlasBackgroundPosition,
+  getExpressionAtlasBackgroundSize,
+} from './expressionAtlasSprite'
 import { loopMotion, sequenceOrder } from './sequenceConfig'
 import { useImagePreload } from './useImagePreload'
 
@@ -65,6 +69,7 @@ function LayerImage({ animateLoop = true, name, className, src, style }) {
 }
 
 function ExpressionAtlas({ activeExpression }) {
+  const frameCount = expressionAtlas.frameNames.length
   const orderedFrameIndexes = [
     activeExpression,
     ...expressionAtlas.frameNames.map((_, index) => index).filter((index) => index !== activeExpression),
@@ -85,9 +90,9 @@ function ExpressionAtlas({ activeExpression }) {
         role="img"
         style={{
           ...expressionAtlas.style,
-          '--expression-frame': index,
-          '--expression-frame-count': expressionAtlas.frameNames.length,
           backgroundImage: `url(${expressionAtlas.src})`,
+          backgroundPosition: getExpressionAtlasBackgroundPosition(index, frameCount),
+          backgroundSize: getExpressionAtlasBackgroundSize(frameCount),
         }}
         transition={{ duration: 0.4, ease: 'easeInOut' }}
       />

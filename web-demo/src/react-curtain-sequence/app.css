@@ -92,9 +92,7 @@ body {
 
 .expression-layer--atlas {
   position: absolute;
-  background-position: calc(var(--expression-frame) * -100%) 0;
   background-repeat: no-repeat;
-  background-size: calc(var(--expression-frame-count) * 100%) 100%;
   pointer-events: none;
   user-select: none;
 }
