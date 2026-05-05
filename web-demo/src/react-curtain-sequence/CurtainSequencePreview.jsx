@@ -1,8 +1,13 @@
 import React from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { curtainSceneGroups, expressionLayers, getLayerStyle } from './sceneData'
+import { useEffect, useMemo, useState } from 'react'
+import {
+  criticalOptimizedSrcs,
+  expressionAtlas,
+  optimizedCurtainSceneGroups,
+} from './optimizedSceneData'
 import { loopMotion, sequenceOrder } from './sequenceConfig'
+import { useImagePreload } from './useImagePreload'
 
 const sequenceByKey = Object.fromEntries(sequenceOrder.map((item) => [item.key, item]))
 
@@ -31,60 +36,67 @@ function buildEnterVariant(config) {
 }
 
 function getLoopForLayer(name) {
-  if (['twin-left', 'twin-right', 'back-hair', 'front-hair', 'ahoge'].includes(name)) {
-    return loopMotion.hair
-  }
-
-  if (['body', 'face', 'left-arm', 'right-arm'].includes(name)) {
-    return loopMotion.breathe
-  }
-
-  if (['balloon-back-blue', 'balloon-back-pink', 'balloon-mid-b', 'balloon-mid-a'].includes(name)) {
-    return loopMotion.balloons
-  }
-
-  if (['gift-blue', 'gift-red'].includes(name)) {
-    return loopMotion.gifts
-  }
-
-  if (name === 'ghost-right') {
-    return loopMotion.ghost
-  }
-
-  if (name === 'glow') {
-    return loopMotion.glow
-  }
+  if (['character-hair-back', 'character-hair-front'].includes(name)) return loopMotion.hair
+  if (name === 'character-body') return loopMotion.breathe
+  if (name === 'balloons') return loopMotion.balloons
+  if (name === 'gifts') return loopMotion.gifts
+  if (name === 'ghost-right') return loopMotion.ghost
+  if (name === 'glow') return loopMotion.glow
 
   return null
 }
 
-function LayerImage({ activeExpression, animateLoop = true, expressionIndex, name, className, src }) {
+function LayerImage({ animateLoop = true, name, className, src, style }) {
   const loop = animateLoop ? getLoopForLayer(name) : null
-  const isExpression = typeof expressionIndex === 'number'
-  const isActiveExpression = isExpression ? expressionIndex === activeExpression : undefined
 
   return (
     <motion.img
       alt={name}
       animate={
-        isExpression
-          ? { opacity: isActiveExpression ? 1 : 0 }
-          : loop
-            ? { ...loop, transition: { duration: loop.duration, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' } }
-            : undefined
+        loop
+          ? { ...loop, transition: { duration: loop.duration, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' } }
+          : undefined
       }
       className={className}
-      data-active={isExpression ? String(isActiveExpression) : undefined}
-      initial={isExpression ? { opacity: isActiveExpression ? 1 : 0 } : undefined}
       src={src}
-      style={getLayerStyle(name)}
-      transition={isExpression ? { duration: 0.4, ease: 'easeInOut' } : undefined}
+      style={style}
     />
   )
 }
 
-function renderGroup(layers, options = {}) {
-  return layers.map((layer, index) => <LayerImage key={layer.name} {...layer} {...options} expressionIndex={options.isExpression ? index : undefined} />)
+function ExpressionAtlas({ activeExpression }) {
+  const orderedFrameIndexes = [
+    activeExpression,
+    ...expressionAtlas.frameNames.map((_, index) => index).filter((index) => index !== activeExpression),
+  ]
+
+  return orderedFrameIndexes.map((index) => {
+    const frameName = expressionAtlas.frameNames[index]
+    const isActive = index === activeExpression
+
+    return (
+      <motion.div
+        aria-label={frameName}
+        animate={{ opacity: isActive ? 1 : 0 }}
+        className="expression-layer expression-layer--atlas"
+        data-active={String(isActive)}
+        initial={{ opacity: isActive ? 1 : 0 }}
+        key={frameName}
+        role="img"
+        style={{
+          ...expressionAtlas.style,
+          '--expression-frame': index,
+          '--expression-frame-count': expressionAtlas.frameNames.length,
+          backgroundImage: `url(${expressionAtlas.src})`,
+        }}
+        transition={{ duration: 0.4, ease: 'easeInOut' }}
+      />
+    )
+  })
+}
+
+function renderGroup(layers) {
+  return layers.map((layer) => <LayerImage key={layer.name} {...layer} />)
 }
 
 const groupSceneClasses = {
@@ -96,47 +108,15 @@ const groupSceneClasses = {
   mascot: 'has-scene-z-15',
 }
 
-/** Collect all image srcs that must be loaded before starting the sequence */
-function collectCriticalSrcs() {
-  const srcs = []
-  for (const layer of curtainSceneGroups.background) srcs.push(layer.src)
-  for (const layer of curtainSceneGroups.character) srcs.push(layer.src)
-  for (const layer of expressionLayers) srcs.push(layer.src)
-  return srcs
-}
-
-function usePreloadImages(srcs) {
-  const [ready, setReady] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-    const promises = srcs.map(
-      (src) =>
-        new Promise((resolve) => {
-          const img = new Image()
-          img.onload = resolve
-          img.onerror = resolve
-          img.src = src
-        }),
-    )
-    Promise.all(promises).then(() => {
-      if (!cancelled) setReady(true)
-    })
-    return () => { cancelled = true }
-  }, [srcs])
-
-  return ready
-}
-
 export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) {
-  const criticalSrcs = useMemo(collectCriticalSrcs, [])
-  const assetsReady = usePreloadImages(criticalSrcs)
+  const criticalSrcs = useMemo(() => criticalOptimizedSrcs, [])
+  const { error: preloadError, ready: assetsReady } = useImagePreload(criticalSrcs)
   const [lightRasterDone, setLightRasterDone] = useState(false)
   const showSequence = assetsReady && lightRasterDone
 
-  const [sequenceKey, setSequenceKey] = useState(0)
+  const sequenceKey = 0
   const [pointer, setPointer] = useState({ x: 0, y: 0 })
-  const [activeExpression, setActiveExpression] = useState(() => expressionLayers.findIndex((layer) => layer.className.includes('is-active')))
+  const [activeExpression, setActiveExpression] = useState(expressionAtlas.activeIndex)
   const [ghostEntryDone, setGhostEntryDone] = useState(false)
 
   const groupVariants = useMemo(
@@ -153,7 +133,7 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      setActiveExpression((current) => (current + 1) % expressionLayers.length)
+      setActiveExpression((current) => (current + 1) % expressionAtlas.frameNames.length)
     }, expressionIntervalMs)
 
     return () => window.clearInterval(timer)
@@ -173,6 +153,7 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
   return (
     <div
       className={`rcs-stage ${!showSequence ? 'rcs-stage--loading' : ''}`}
+      data-load-error={preloadError?.message ?? undefined}
       data-sequence-key={sequenceKey}
       data-testid="curtain-stage"
       onPointerLeave={handlePointerLeave}
@@ -180,29 +161,29 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
       style={{ '--mx': pointer.x, '--my': pointer.y }}
     >
       <motion.div className="rcs-stage-inner" initial={false} key={sequenceKey}>
-        {renderGroup(curtainSceneGroups.background)}
+        {renderGroup(optimizedCurtainSceneGroups.background)}
 
         <motion.div animate={showSequence ? 'visible' : 'hidden'} className={`rcs-group rcs-group-character ${groupSceneClasses.character}`} initial="hidden" variants={groupVariants.character}>
-          {renderGroup(curtainSceneGroups.character)}
+          {renderGroup(optimizedCurtainSceneGroups.character)}
           <div className="rcs-expression-stack">
-            {renderGroup(expressionLayers, { activeExpression, isExpression: true })}
+            <ExpressionAtlas activeExpression={activeExpression} />
           </div>
         </motion.div>
 
         <motion.div animate={showSequence ? 'visible' : 'hidden'} className={`rcs-group rcs-group-cake ${groupSceneClasses.cake}`} initial="hidden" variants={groupVariants.cake}>
-          {renderGroup(curtainSceneGroups.cake)}
+          {renderGroup(optimizedCurtainSceneGroups.cake)}
         </motion.div>
         <motion.div animate={showSequence ? 'visible' : 'hidden'} className={`rcs-group rcs-group-balloons ${groupSceneClasses.balloons}`} initial="hidden" variants={groupVariants.balloons}>
-          {renderGroup(curtainSceneGroups.balloons)}
+          {renderGroup(optimizedCurtainSceneGroups.balloons)}
         </motion.div>
         <motion.div animate={showSequence ? 'visible' : 'hidden'} className={`rcs-group rcs-group-gifts ${groupSceneClasses.gifts}`} initial="hidden" variants={groupVariants.gifts}>
-          {renderGroup(curtainSceneGroups.gifts)}
+          {renderGroup(optimizedCurtainSceneGroups.gifts)}
         </motion.div>
         <motion.div animate={showSequence ? 'visible' : 'hidden'} className={`rcs-group rcs-group-mascot ${groupSceneClasses.mascot}`} initial="hidden" variants={groupVariants.mascot}>
-          {renderGroup(curtainSceneGroups.mascot)}
+          {renderGroup(optimizedCurtainSceneGroups.mascot)}
         </motion.div>
 
-        {renderGroup(curtainSceneGroups.fx)}
+        {renderGroup(optimizedCurtainSceneGroups.fx)}
       </motion.div>
 
       {/* Ghost positioned relative to viewport (bottom-right), PSD-proportional size, 80% visible */}
@@ -214,7 +195,7 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
         variants={groupVariants.ghost}
         onAnimationComplete={() => { if (showSequence) setGhostEntryDone(true) }}
       >
-        {curtainSceneGroups.ghost.map((layer) => (
+        {optimizedCurtainSceneGroups.ghost.map((layer) => (
           <motion.img
             key={layer.name}
             alt={layer.name}

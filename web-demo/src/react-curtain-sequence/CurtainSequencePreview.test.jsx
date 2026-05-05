@@ -8,14 +8,16 @@ import CurtainSequencePreview from './CurtainSequencePreview'
 const appStyles = readFileSync(resolve(import.meta.dirname, 'app.css'), 'utf8')
 
 describe('CurtainSequencePreview', () => {
-  it('renders core scene groups and images', () => {
+  it('renders optimized scene groups and images', () => {
     render(<CurtainSequencePreview />)
 
     expect(screen.getByTestId('curtain-stage')).toBeInTheDocument()
-    expect(screen.getByAltText('body')).toBeInTheDocument()
-    expect(screen.getByAltText('cake')).toBeInTheDocument()
+    expect(screen.getByAltText('character-body')).toBeInTheDocument()
+    expect(screen.getByAltText('cake-table')).toBeInTheDocument()
     expect(screen.getByAltText('ghost-right')).toBeInTheDocument()
 
+    expect(document.querySelectorAll('.rcs-stage img')).toHaveLength(11)
+    expect(document.querySelector('.rcs-expression-stack [role="img"]')).toHaveAccessibleName('expr-c')
     expect(document.querySelector('.rcs-group-character')).toBeInTheDocument()
     expect(document.querySelector('.rcs-group-cake')).toBeInTheDocument()
   })
@@ -74,15 +76,15 @@ describe('Curtain sequence interactions', () => {
     vi.useRealTimers()
   })
 
-  it('cycles expressions every 3 seconds', () => {
+  it('cycles expression atlas frames every 3 seconds', () => {
     render(<CurtainSequencePreview expressionIntervalMs={3000} />)
 
-    expect(screen.getByAltText('expr-c')).toHaveAttribute('data-active', 'true')
+    expect(screen.getByRole('img', { name: 'expr-c' })).toHaveAttribute('data-active', 'true')
 
     act(() => {
       vi.advanceTimersByTime(3000)
     })
 
-    expect(screen.getByAltText('expr-d')).toHaveAttribute('data-active', 'true')
+    expect(screen.getByRole('img', { name: 'expr-d' })).toHaveAttribute('data-active', 'true')
   })
 })
