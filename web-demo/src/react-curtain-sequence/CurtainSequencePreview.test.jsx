@@ -80,11 +80,39 @@ describe('Curtain sequence interactions', () => {
     render(<CurtainSequencePreview expressionIntervalMs={3000} />)
 
     expect(screen.getByRole('img', { name: 'expr-c' })).toHaveAttribute('data-active', 'true')
+    expect(document.querySelector('[data-transition-state="exiting"]')).not.toBeInTheDocument()
 
     act(() => {
       vi.advanceTimersByTime(3000)
     })
 
     expect(screen.getByRole('img', { name: 'expr-d' })).toHaveAttribute('data-active', 'true')
+  })
+
+  it('keeps the previous expression atlas frame briefly as an exiting layer during transitions', () => {
+    render(<CurtainSequencePreview expressionIntervalMs={3000} />)
+
+    act(() => {
+      vi.advanceTimersByTime(3000)
+    })
+
+    expect(screen.getByRole('img', { name: 'expr-d' })).toHaveAttribute('data-active', 'true')
+    expect(screen.getByRole('img', { name: 'expr-c' })).toHaveAttribute('data-transition-state', 'exiting')
+  })
+
+  it('removes the exiting expression atlas frame after the fade-out completes', () => {
+    render(<CurtainSequencePreview expressionIntervalMs={3000} />)
+
+    act(() => {
+      vi.advanceTimersByTime(3000)
+    })
+
+    act(() => {
+      vi.advanceTimersByTime(400)
+    })
+
+    expect(screen.getByRole('img', { name: 'expr-d' })).toHaveAttribute('data-active', 'true')
+    expect(screen.queryByRole('img', { name: 'expr-c' })).not.toBeInTheDocument()
+    expect(document.querySelectorAll('.rcs-expression-stack [role="img"]')).toHaveLength(1)
   })
 })

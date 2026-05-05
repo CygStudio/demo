@@ -68,36 +68,55 @@ function LayerImage({ animateLoop = true, name, className, src, style }) {
   )
 }
 
-function ExpressionAtlas({ activeExpression }) {
+const expressionTransitionMs = 400
+const expressionTransition = { duration: expressionTransitionMs / 1000, ease: 'easeInOut' }
+
+function ExpressionAtlasLayer({ frameCount, frameIndex, shouldFadeIn = false, transitionState }) {
+  const frameName = expressionAtlas.frameNames[frameIndex]
+  const isActive = transitionState === 'active'
+
+  return (
+    <motion.div
+      aria-label={frameName}
+      animate={{ opacity: isActive ? 1 : 0 }}
+      className="expression-layer expression-layer--atlas"
+      data-active={String(isActive)}
+      data-transition-state={transitionState}
+      initial={{ opacity: isActive ? (shouldFadeIn ? 0 : 1) : 1 }}
+      key={`${transitionState}-${frameName}`}
+      role="img"
+      style={{
+        ...expressionAtlas.style,
+        backgroundImage: `url(${expressionAtlas.src})`,
+        backgroundPosition: getExpressionAtlasBackgroundPosition(frameIndex, frameCount),
+        backgroundSize: getExpressionAtlasBackgroundSize(frameCount),
+      }}
+      transition={expressionTransition}
+    />
+  )
+}
+
+function ExpressionAtlas({ activeExpression, exitingExpression }) {
   const frameCount = expressionAtlas.frameNames.length
-  const orderedFrameIndexes = [
-    activeExpression,
-    ...expressionAtlas.frameNames.map((_, index) => index).filter((index) => index !== activeExpression),
-  ]
+  const hasExitingLayer = typeof exitingExpression === 'number' && exitingExpression !== activeExpression
 
-  return orderedFrameIndexes.map((index) => {
-    const frameName = expressionAtlas.frameNames[index]
-    const isActive = index === activeExpression
-
-    return (
-      <motion.div
-        aria-label={frameName}
-        animate={{ opacity: isActive ? 1 : 0 }}
-        className="expression-layer expression-layer--atlas"
-        data-active={String(isActive)}
-        initial={{ opacity: isActive ? 1 : 0 }}
-        key={frameName}
-        role="img"
-        style={{
-          ...expressionAtlas.style,
-          backgroundImage: `url(${expressionAtlas.src})`,
-          backgroundPosition: getExpressionAtlasBackgroundPosition(index, frameCount),
-          backgroundSize: getExpressionAtlasBackgroundSize(frameCount),
-        }}
-        transition={{ duration: 0.4, ease: 'easeInOut' }}
+  return (
+    <>
+      {hasExitingLayer && (
+        <ExpressionAtlasLayer
+          frameCount={frameCount}
+          frameIndex={exitingExpression}
+          transitionState="exiting"
+        />
+      )}
+      <ExpressionAtlasLayer
+        frameCount={frameCount}
+        frameIndex={activeExpression}
+        shouldFadeIn={hasExitingLayer}
+        transitionState="active"
       />
-    )
-  })
+    </>
+  )
 }
 
 function renderGroup(layers) {
@@ -121,7 +140,10 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
 
   const sequenceKey = 0
   const [pointer, setPointer] = useState({ x: 0, y: 0 })
-  const [activeExpression, setActiveExpression] = useState(expressionAtlas.activeIndex)
+  const [expressionTransitionState, setExpressionTransitionState] = useState({
+    active: expressionAtlas.activeIndex,
+    exiting: null,
+  })
   const [ghostEntryDone, setGhostEntryDone] = useState(false)
 
   const groupVariants = useMemo(
@@ -138,11 +160,28 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      setActiveExpression((current) => (current + 1) % expressionAtlas.frameNames.length)
+      setExpressionTransitionState((current) => ({
+        active: (current.active + 1) % expressionAtlas.frameNames.length,
+        exiting: current.active,
+      }))
     }, expressionIntervalMs)
 
     return () => window.clearInterval(timer)
   }, [expressionIntervalMs])
+
+  useEffect(() => {
+    if (typeof expressionTransitionState.exiting !== 'number') return undefined
+
+    const timer = window.setTimeout(() => {
+      setExpressionTransitionState((current) => (
+        current.exiting === expressionTransitionState.exiting
+          ? { ...current, exiting: null }
+          : current
+      ))
+    }, expressionTransitionMs)
+
+    return () => window.clearTimeout(timer)
+  }, [expressionTransitionState.exiting])
 
   function handlePointerMove(event) {
     const rect = event.currentTarget.getBoundingClientRect()
@@ -171,7 +210,10 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
         <motion.div animate={showSequence ? 'visible' : 'hidden'} className={`rcs-group rcs-group-character ${groupSceneClasses.character}`} initial="hidden" variants={groupVariants.character}>
           {renderGroup(optimizedCurtainSceneGroups.character)}
           <div className="rcs-expression-stack">
-            <ExpressionAtlas activeExpression={activeExpression} />
+            <ExpressionAtlas
+              activeExpression={expressionTransitionState.active}
+              exitingExpression={expressionTransitionState.exiting}
+            />
           </div>
         </motion.div>
 
