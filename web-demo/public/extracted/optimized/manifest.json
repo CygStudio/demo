@@ -194,23 +194,83 @@
       }
     },
     {
-      "name": "mascot-cake",
+      "name": "mascot-cake-1",
       "type": "standalone",
       "box": [
         921,
-        333,
-        1472,
-        574
+        361,
+        997,
+        424
       ],
-      "width": 551,
-      "height": 241,
+      "width": 76,
+      "height": 63,
       "className": "layer mascot cake",
       "loop": null,
       "activeFrame": null,
       "frameNames": null,
       "formats": {
-        "png": "extracted/optimized/mascot-cake.png",
-        "webp": "extracted/optimized/mascot-cake.webp"
+        "png": "extracted/optimized/mascot-cake-1.png",
+        "webp": "extracted/optimized/mascot-cake-1.webp"
+      }
+    },
+    {
+      "name": "mascot-cake-2",
+      "type": "standalone",
+      "box": [
+        1072,
+        510,
+        1143,
+        574
+      ],
+      "width": 71,
+      "height": 64,
+      "className": "layer mascot cake",
+      "loop": null,
+      "activeFrame": null,
+      "frameNames": null,
+      "formats": {
+        "png": "extracted/optimized/mascot-cake-2.png",
+        "webp": "extracted/optimized/mascot-cake-2.webp"
+      }
+    },
+    {
+      "name": "mascot-cake-3",
+      "type": "standalone",
+      "box": [
+        1187,
+        444,
+        1243,
+        498
+      ],
+      "width": 56,
+      "height": 54,
+      "className": "layer mascot cake",
+      "loop": null,
+      "activeFrame": null,
+      "frameNames": null,
+      "formats": {
+        "png": "extracted/optimized/mascot-cake-3.png",
+        "webp": "extracted/optimized/mascot-cake-3.webp"
+      }
+    },
+    {
+      "name": "mascot-cake-4",
+      "type": "standalone",
+      "box": [
+        1399,
+        334,
+        1472,
+        415
+      ],
+      "width": 73,
+      "height": 81,
+      "className": "layer mascot cake",
+      "loop": null,
+      "activeFrame": null,
+      "frameNames": null,
+      "formats": {
+        "png": "extracted/optimized/mascot-cake-4.png",
+        "webp": "extracted/optimized/mascot-cake-4.webp"
       }
     },
     {

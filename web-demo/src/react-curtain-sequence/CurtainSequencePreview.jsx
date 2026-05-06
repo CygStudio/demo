@@ -1,19 +1,32 @@
 import React from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   criticalOptimizedSrcs,
   expressionAtlas,
   optimizedCurtainSceneGroups,
+  optimizedMascotTangyuanMotionItems,
+  getScenePositionStyle,
 } from './optimizedSceneData'
 import {
   getExpressionAtlasBackgroundPosition,
   getExpressionAtlasBackgroundSize,
 } from './expressionAtlasSprite'
 import { loopMotion, sequenceOrder } from './sequenceConfig'
+import { createTangyuanVelocities, stepTangyuanMotion } from './tangyuanMotion'
 import { useImagePreload } from './useImagePreload'
+import { getVisibleSceneBounds } from './visibleSceneBounds'
 
 const sequenceByKey = Object.fromEntries(sequenceOrder.map((item) => [item.key, item]))
+const sceneEntryCompleteMs = Math.max(...sequenceOrder.map(({ delay, duration }) => delay + duration)) * 1000
+
+function buildInitialTangyuanItems() {
+  return optimizedMascotTangyuanMotionItems.map((item) => ({
+    ...item,
+    vx: 0,
+    vy: 0,
+  }))
+}
 
 function buildEnterVariant(config) {
   return {
@@ -145,6 +158,11 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
     exiting: null,
   })
   const [ghostEntryDone, setGhostEntryDone] = useState(false)
+  const [mascotTangyuanItems, setMascotTangyuanItems] = useState(buildInitialTangyuanItems)
+  const tangyuanFrameRef = useRef(null)
+  const tangyuanMotionTimerRef = useRef(null)
+  const tangyuanLastTimestampRef = useRef(null)
+  const tangyuanSkipBootstrapFrameRef = useRef(false)
 
   const groupVariants = useMemo(
     () => ({
@@ -182,6 +200,70 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
 
     return () => window.clearTimeout(timer)
   }, [expressionTransitionState.exiting])
+
+  useEffect(() => {
+    setMascotTangyuanItems(buildInitialTangyuanItems())
+    tangyuanLastTimestampRef.current = null
+    tangyuanSkipBootstrapFrameRef.current = false
+
+    if (tangyuanMotionTimerRef.current !== null) {
+      window.clearTimeout(tangyuanMotionTimerRef.current)
+      tangyuanMotionTimerRef.current = null
+    }
+
+    if (tangyuanFrameRef.current !== null) {
+      window.cancelAnimationFrame(tangyuanFrameRef.current)
+      tangyuanFrameRef.current = null
+    }
+
+    if (!showSequence) return undefined
+
+    tangyuanMotionTimerRef.current = window.setTimeout(() => {
+      const velocities = createTangyuanVelocities()
+      const startedItems = buildInitialTangyuanItems().map((item, index) => ({
+        ...item,
+        ...velocities[index],
+      }))
+
+      tangyuanSkipBootstrapFrameRef.current = true
+      setMascotTangyuanItems(stepTangyuanMotion(startedItems, optimizedSceneBounds, 16))
+
+      const tick = (timestamp) => {
+        setMascotTangyuanItems((current) => {
+          if (tangyuanSkipBootstrapFrameRef.current) {
+            tangyuanSkipBootstrapFrameRef.current = false
+            tangyuanLastTimestampRef.current = timestamp
+            return current
+          }
+
+          const dtMs = tangyuanLastTimestampRef.current === null
+            ? 16
+            : timestamp - tangyuanLastTimestampRef.current
+
+          tangyuanLastTimestampRef.current = timestamp
+          return stepTangyuanMotion(current, optimizedSceneBounds, dtMs)
+        })
+
+        tangyuanFrameRef.current = window.requestAnimationFrame(tick)
+      }
+
+      tangyuanFrameRef.current = window.requestAnimationFrame(tick)
+    }, sceneEntryCompleteMs)
+
+    return () => {
+      tangyuanSkipBootstrapFrameRef.current = false
+
+      if (tangyuanMotionTimerRef.current !== null) {
+        window.clearTimeout(tangyuanMotionTimerRef.current)
+        tangyuanMotionTimerRef.current = null
+      }
+
+      if (tangyuanFrameRef.current !== null) {
+        window.cancelAnimationFrame(tangyuanFrameRef.current)
+        tangyuanFrameRef.current = null
+      }
+    }
+  }, [showSequence])
 
   function handlePointerMove(event) {
     const rect = event.currentTarget.getBoundingClientRect()
@@ -227,7 +309,15 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
           {renderGroup(optimizedCurtainSceneGroups.gifts)}
         </motion.div>
         <motion.div animate={showSequence ? 'visible' : 'hidden'} className={`rcs-group rcs-group-mascot ${groupSceneClasses.mascot}`} initial="hidden" variants={groupVariants.mascot}>
-          {renderGroup(optimizedCurtainSceneGroups.mascot)}
+          {mascotTangyuanItems.map((layer) => (
+            <img
+              key={layer.name}
+              alt={layer.name}
+              className={`${layer.className} rcs-mascot-tangyuan`}
+              src={layer.src}
+              style={getScenePositionStyle(layer)}
+            />
+          ))}
         </motion.div>
 
         {renderGroup(optimizedCurtainSceneGroups.fx)}

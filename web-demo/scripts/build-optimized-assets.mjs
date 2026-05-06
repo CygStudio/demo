@@ -2,11 +2,15 @@ import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import sharp from 'sharp'
 import { criticalOptimizedAssetNames, getOptimizedAssetBox, optimizedAssetSpec } from '../src/react-curtain-sequence/optimizedAssetSpec.js'
+import { mascotTangyuanLayout } from '../src/react-curtain-sequence/mascotTangyuanLayout.js'
 
 const projectRoot = resolve(import.meta.dirname, '..')
 const sourceDir = resolve(projectRoot, 'public/extracted/layers')
 const outputDir = resolve(projectRoot, 'public/extracted/optimized')
+const assetSourceDir = resolve(projectRoot, 'scripts/optimized-asset-sources')
 const publicPrefix = 'extracted/optimized'
+const mascotCakeSourcePath = resolve(assetSourceDir, 'mascot-cake.png')
+const mascotTangyuanByName = new Map(mascotTangyuanLayout.map((item) => [item.name, item]))
 
 await rm(outputDir, { force: true, recursive: true })
 await mkdir(outputDir, { recursive: true })
@@ -50,6 +54,10 @@ for (const asset of optimizedAssetSpec) {
 await writeFile(resolve(outputDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`)
 
 async function buildAssetImage(asset, box, width, height) {
+  if (mascotTangyuanByName.has(asset.name)) {
+    return buildMascotTangyuanAsset(asset.name)
+  }
+
   if (asset.type === 'atlas') {
     return buildAtlas(asset, box, width, height)
   }
@@ -68,6 +76,18 @@ async function buildAssetImage(asset, box, width, height) {
       background: { r: 0, g: 0, b: 0, alpha: 0 },
     },
   }).composite(sources)
+}
+
+function buildMascotTangyuanAsset(name) {
+  const { cropBox } = mascotTangyuanByName.get(name)
+  const [left, top, right, bottom] = cropBox
+
+  return sharp(mascotCakeSourcePath).extract({
+    left,
+    top,
+    width: right - left,
+    height: bottom - top,
+  })
 }
 
 async function buildAtlas(asset, box, frameWidth, frameHeight) {

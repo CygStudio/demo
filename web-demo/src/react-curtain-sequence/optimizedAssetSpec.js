@@ -1,6 +1,7 @@
 import { layerBoxes } from './sceneGeometry.js'
+import { mascotTangyuanLayout } from './mascotTangyuanLayout.js'
 
-const source = (name, file) => ({ name, file, box: layerBoxes[name] })
+const source = (name, file, box = layerBoxes[name]) => ({ name, file, box })
 
 export const optimizedAssetSpec = [
   {
@@ -104,12 +105,12 @@ export const optimizedAssetSpec = [
     loop: 'ghost',
     sources: [source('ghost-right', '055_婚叫_1.png')],
   },
-  {
-    name: 'mascot-cake',
+  ...mascotTangyuanLayout.map(({ name, sceneBox }) => ({
+    name,
     type: 'standalone',
     className: 'layer mascot cake',
-    sources: [source('mascot-cake', '057_湯圓_1.png')],
-  },
+    sources: [source(name, 'mascot-cake.png', sceneBox)],
+  })),
   {
     name: 'glow',
     type: 'standalone',
@@ -140,7 +141,7 @@ export const optimizedSceneGroups = {
   balloons: layerRefs(['balloons']),
   gifts: layerRefs(['gifts']),
   ghost: layerRefs(['ghost-right']),
-  mascot: layerRefs(['mascot-cake']),
+  mascot: layerRefs(mascotTangyuanLayout.map(({ name }) => name)),
   fx: layerRefs(['glow', 'filter']),
 }
 

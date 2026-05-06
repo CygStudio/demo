@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { mascotTangyuanLayout } from './mascotTangyuanLayout.js'
 import {
   criticalOptimizedAssetNames,
   getOptimizedAssetBox,
@@ -8,7 +9,7 @@ import {
 
 describe('optimizedAssetSpec', () => {
   it('defines the approved optimized request budget', () => {
-    expect(optimizedAssetSpec).toHaveLength(12)
+    expect(optimizedAssetSpec).toHaveLength(15)
     expect(criticalOptimizedAssetNames).toEqual([
       'scene-base',
       'character-hair-back',
@@ -28,11 +29,28 @@ describe('optimizedAssetSpec', () => {
     expect(optimizedSceneGroups.cake.map((layer) => layer.name)).toEqual(['cake-table'])
     expect(optimizedSceneGroups.balloons.map((layer) => layer.name)).toEqual(['balloons'])
     expect(optimizedSceneGroups.gifts.map((layer) => layer.name)).toEqual(['gifts'])
+    expect(optimizedSceneGroups.ghost.map((layer) => layer.name)).toEqual(['ghost-right'])
+    expect(optimizedSceneGroups.mascot.map((layer) => layer.name)).toEqual([
+      'mascot-cake-1',
+      'mascot-cake-2',
+      'mascot-cake-3',
+      'mascot-cake-4',
+    ])
     expect(optimizedSceneGroups.fx.map((layer) => layer.name)).toEqual(['glow', 'filter'])
   })
 
-  it('computes union boxes for composite assets', () => {
+  it('replaces mascot-cake with four tangyuan assets', () => {
+    expect(optimizedAssetSpec.some((asset) => asset.name === 'mascot-cake')).toBe(false)
+    expect(
+      optimizedAssetSpec.filter((asset) => asset.name.startsWith('mascot-cake')).map((asset) => asset.name),
+    ).toEqual(['mascot-cake-1', 'mascot-cake-2', 'mascot-cake-3', 'mascot-cake-4'])
+  })
+
+  it('computes union boxes for composite assets and split mascot tangyuan', () => {
     expect(getOptimizedAssetBox('character-body')).toEqual([814, 131, 1892, 1265])
     expect(getOptimizedAssetBox('expression-atlas')).toEqual([1090, 228, 1295, 421])
+    mascotTangyuanLayout.forEach(({ name, sceneBox }) => {
+      expect(getOptimizedAssetBox(name)).toEqual(sceneBox)
+    })
   })
 })
