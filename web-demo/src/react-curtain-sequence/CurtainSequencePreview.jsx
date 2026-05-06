@@ -2,10 +2,13 @@ import React from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  BASE_W,
+  BASE_H,
   criticalOptimizedSrcs,
   expressionAtlas,
   optimizedCurtainSceneGroups,
   optimizedMascotTangyuanMotionItems,
+  optimizedSceneBounds,
   getScenePositionStyle,
 } from './optimizedSceneData'
 import {
@@ -13,19 +16,14 @@ import {
   getExpressionAtlasBackgroundSize,
 } from './expressionAtlasSprite'
 import { loopMotion, sequenceOrder } from './sequenceConfig'
-import { createTangyuanVelocities, stepTangyuanMotion } from './tangyuanMotion'
+import { createInitialFollowerItems, stepCursorFollower } from './cursorFollowerMotion'
 import { useImagePreload } from './useImagePreload'
-import { getVisibleSceneBounds } from './visibleSceneBounds'
 
 const sequenceByKey = Object.fromEntries(sequenceOrder.map((item) => [item.key, item]))
 const sceneEntryCompleteMs = Math.max(...sequenceOrder.map(({ delay, duration }) => delay + duration)) * 1000
 
 function buildInitialTangyuanItems() {
-  return optimizedMascotTangyuanMotionItems.map((item) => ({
-    ...item,
-    vx: 0,
-    vy: 0,
-  }))
+  return createInitialFollowerItems(optimizedMascotTangyuanMotionItems)
 }
 
 function buildEnterVariant(config) {
@@ -158,11 +156,17 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
     exiting: null,
   })
   const [ghostEntryDone, setGhostEntryDone] = useState(false)
-  const [mascotTangyuanItems, setMascotTangyuanItems] = useState(buildInitialTangyuanItems)
+  const [mascotTangyuanState, setMascotTangyuanState] = useState(() => ({
+    items: buildInitialTangyuanItems(),
+    mode: 'home',
+  }))
+  const mascotTangyuanItems = mascotTangyuanState.items
   const tangyuanFrameRef = useRef(null)
   const tangyuanMotionTimerRef = useRef(null)
   const tangyuanLastTimestampRef = useRef(null)
   const tangyuanSkipBootstrapFrameRef = useRef(false)
+  const pointerSceneRef = useRef(null)
+  const followerStartMsRef = useRef(0)
 
   const groupVariants = useMemo(
     () => ({
@@ -202,9 +206,13 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
   }, [expressionTransitionState.exiting])
 
   useEffect(() => {
-    setMascotTangyuanItems(buildInitialTangyuanItems())
+    setMascotTangyuanState({
+      items: buildInitialTangyuanItems(),
+      mode: 'home',
+    })
     tangyuanLastTimestampRef.current = null
     tangyuanSkipBootstrapFrameRef.current = false
+    followerStartMsRef.current = 0
 
     if (tangyuanMotionTimerRef.current !== null) {
       window.clearTimeout(tangyuanMotionTimerRef.current)
@@ -219,29 +227,35 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
     if (!showSequence) return undefined
 
     tangyuanMotionTimerRef.current = window.setTimeout(() => {
-      const velocities = createTangyuanVelocities()
-      const startedItems = buildInitialTangyuanItems().map((item, index) => ({
-        ...item,
-        ...velocities[index],
-      }))
-
       tangyuanSkipBootstrapFrameRef.current = true
-      setMascotTangyuanItems(stepTangyuanMotion(startedItems, optimizedSceneBounds, 16))
 
       const tick = (timestamp) => {
-        setMascotTangyuanItems((current) => {
-          if (tangyuanSkipBootstrapFrameRef.current) {
-            tangyuanSkipBootstrapFrameRef.current = false
-            tangyuanLastTimestampRef.current = timestamp
-            return current
-          }
-
-          const dtMs = tangyuanLastTimestampRef.current === null
-            ? 16
-            : timestamp - tangyuanLastTimestampRef.current
-
+        if (tangyuanSkipBootstrapFrameRef.current) {
+          tangyuanSkipBootstrapFrameRef.current = false
           tangyuanLastTimestampRef.current = timestamp
-          return stepTangyuanMotion(current, optimizedSceneBounds, dtMs)
+          followerStartMsRef.current = timestamp
+          tangyuanFrameRef.current = window.requestAnimationFrame(tick)
+          return
+        }
+
+        const dtMs = tangyuanLastTimestampRef.current === null
+          ? 16
+          : timestamp - tangyuanLastTimestampRef.current
+        const elapsedMs = timestamp - followerStartMsRef.current
+        const pointer = pointerSceneRef.current
+
+        tangyuanLastTimestampRef.current = timestamp
+
+        setMascotTangyuanState((current) => {
+          const next = stepCursorFollower({
+            items: current.items,
+            pointer,
+            mode: current.mode,
+            dtMs,
+            elapsedMs,
+            bounds: optimizedSceneBounds,
+          })
+          return next
         })
 
         tangyuanFrameRef.current = window.requestAnimationFrame(tick)
@@ -267,13 +281,18 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
 
   function handlePointerMove(event) {
     const rect = event.currentTarget.getBoundingClientRect()
-    const x = (event.clientX - rect.left) / rect.width - 0.5
-    const y = (event.clientY - rect.top) / rect.height - 0.5
-    setPointer({ x: Number(x.toFixed(3)), y: Number(y.toFixed(3)) })
+    const normalizedX = (event.clientX - rect.left) / rect.width - 0.5
+    const normalizedY = (event.clientY - rect.top) / rect.height - 0.5
+    setPointer({ x: Number(normalizedX.toFixed(3)), y: Number(normalizedY.toFixed(3)) })
+
+    const sceneX = ((event.clientX - rect.left) / rect.width) * BASE_W
+    const sceneY = ((event.clientY - rect.top) / rect.height) * BASE_H
+    pointerSceneRef.current = { x: sceneX, y: sceneY }
   }
 
   function handlePointerLeave() {
     setPointer({ x: 0, y: 0 })
+    pointerSceneRef.current = null
   }
 
   return (

@@ -1,16 +1,12 @@
 import React from 'react'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { act, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  getScenePositionStyle,
   optimizedCurtainSceneGroups,
-  optimizedMascotTangyuanMotionItems,
-  optimizedSceneBounds,
 } from './optimizedSceneData'
 import { sequenceOrder } from './sequenceConfig'
-import { createTangyuanVelocities, stepTangyuanMotion } from './tangyuanMotion'
 import CurtainSequencePreview from './CurtainSequencePreview'
 
 vi.mock('motion/react', async () => {
@@ -77,13 +73,6 @@ function readTangyuanLayout() {
   })
 }
 
-function formatTangyuanLayout(items) {
-  return items.map(({ name, width, height, x, y }) => ({
-    name,
-    ...getScenePositionStyle({ x, y, width, height }),
-  }))
-}
-
 function createMockRect({ left, top, width, height }) {
   return {
     x: left,
@@ -111,20 +100,6 @@ function mockVisibleSceneRects({
   })
 
   return { stageRect, sceneRect }
-}
-
-function getVisiblePercentBounds(stageRect, sceneRect) {
-  const left = Math.max(stageRect.left - sceneRect.left, 0)
-  const right = Math.min(stageRect.right - sceneRect.left, sceneRect.width)
-  const top = Math.max(stageRect.top - sceneRect.top, 0)
-  const bottom = Math.min(stageRect.bottom - sceneRect.top, sceneRect.height)
-
-  return {
-    left: (left / sceneRect.width) * 100,
-    right: (right / sceneRect.width) * 100,
-    top: (top / sceneRect.height) * 100,
-    bottom: (bottom / sceneRect.height) * 100,
-  }
 }
 
 async function flushPreloadMicrotasks() {
@@ -260,7 +235,7 @@ describe('Curtain sequence interactions', () => {
     expect(document.querySelectorAll('.rcs-expression-stack [role="img"]')).toHaveLength(1)
   })
 
-  it('keeps tangyuan at their original positions until scene entry completes, then starts independent motion', async () => {
+  it('keeps tangyuan at their original positions until scene entry completes', async () => {
     render(<CurtainSequencePreview />)
     await flushPreloadMicrotasks()
 
@@ -277,45 +252,16 @@ describe('Curtain sequence interactions', () => {
     })
 
     expect(readTangyuanLayout()).toEqual(expectedTangyuanLayout)
-
-    act(() => {
-      vi.advanceTimersByTime(1)
-    })
-
-    const movedLayout = readTangyuanLayout()
-    expect(movedLayout).not.toEqual(expectedTangyuanLayout)
-
-    movedLayout.forEach((item, index) => {
-      expect(item.left).not.toBe(expectedTangyuanLayout[index].left)
-      expect(item.top).not.toBe(expectedTangyuanLayout[index].top)
-    })
-
-    const deltaDirections = movedLayout.map((item, index) => {
-      const initial = expectedTangyuanLayout[index]
-
-      return [
-        Math.sign(parseFloat(item.left) - parseFloat(initial.left)),
-        Math.sign(parseFloat(item.top) - parseFloat(initial.top)),
-      ].join(',')
-    })
-
-    expect(new Set(deltaDirections).size).toBe(4)
   })
 
-  it('does not double-step on the first post-start animation frame', async () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0)
+  it('moves tangyuan toward the pointer under StrictMode', async () => {
+    mockVisibleSceneRects()
 
-    const velocities = createTangyuanVelocities(() => 0)
-    const startedItems = optimizedMascotTangyuanMotionItems.map((item, index) => ({
-      ...item,
-      ...velocities[index],
-    }))
-    const firstStepLayout = formatTangyuanLayout(stepTangyuanMotion(startedItems, optimizedSceneBounds, 16))
-    const secondStepLayout = formatTangyuanLayout(
-      stepTangyuanMotion(stepTangyuanMotion(startedItems, optimizedSceneBounds, 16), optimizedSceneBounds, 16),
+    render(
+      <React.StrictMode>
+        <CurtainSequencePreview />
+      </React.StrictMode>,
     )
-
-    render(<CurtainSequencePreview />)
     await flushPreloadMicrotasks()
 
     act(() => {
@@ -323,46 +269,20 @@ describe('Curtain sequence interactions', () => {
     })
 
     act(() => {
-      vi.advanceTimersByTime(sceneEntryCompleteMs)
+      vi.advanceTimersByTime(sceneEntryCompleteMs + 16)
     })
 
-    expect(readTangyuanLayout()).toEqual(firstStepLayout)
+    const stage = screen.getByTestId('curtain-stage')
+    act(() => {
+      fireEvent.pointerMove(stage, { clientX: 100, clientY: 100 })
+    })
 
     act(() => {
-      vi.advanceTimersByTime(16)
+      for (let frame = 0; frame < 30; frame += 1) {
+        vi.advanceTimersByTime(16)
+      }
     })
 
-    expect(readTangyuanLayout()).toEqual(firstStepLayout)
-
-    act(() => {
-      vi.advanceTimersByTime(16)
-    })
-
-    expect(readTangyuanLayout()).toEqual(secondStepLayout)
-  })
-
-  it('keeps tangyuan inside the visible scene bounds while bouncing', async () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0)
-    const { stageRect, sceneRect } = mockVisibleSceneRects()
-    const visibleBounds = getVisiblePercentBounds(stageRect, sceneRect)
-
-    render(<CurtainSequencePreview />)
-    await flushPreloadMicrotasks()
-
-    act(() => {
-      vi.advanceTimersByTime(lightRasterCompleteMs + sceneEntryCompleteMs + 5000)
-    })
-
-    readTangyuanLayout().forEach((item) => {
-      const left = parseFloat(item.left)
-      const top = parseFloat(item.top)
-      const width = parseFloat(item.width)
-      const height = parseFloat(item.height)
-
-      expect(left).toBeGreaterThanOrEqual(visibleBounds.left)
-      expect(left + width).toBeLessThanOrEqual(visibleBounds.right)
-      expect(top).toBeGreaterThanOrEqual(visibleBounds.top)
-      expect(top + height).toBeLessThanOrEqual(visibleBounds.bottom)
-    })
+    expect(readTangyuanLayout()).not.toEqual(expectedTangyuanLayout)
   })
 })
