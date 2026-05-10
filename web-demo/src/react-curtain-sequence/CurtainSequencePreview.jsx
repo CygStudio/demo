@@ -33,14 +33,12 @@ function buildEnterVariant(config) {
       x: config.x ?? 0,
       y: config.y ?? 0,
       scale: config.scale ?? 0.98,
-      filter: `blur(${config.blurFrom}px)`,
     },
     visible: {
       opacity: 1,
       x: 0,
       y: 0,
       scale: 1,
-      filter: 'blur(0px)',
       transition: {
         delay: config.delay,
         duration: config.duration,

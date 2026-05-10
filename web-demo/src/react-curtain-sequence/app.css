@@ -23,6 +23,8 @@ body {
   width: 100vw;
   height: 100dvh;
   overflow: hidden;
+  contain: layout style paint;
+  isolation: isolate;
   background:
     radial-gradient(circle at 50% 14%, rgba(255,255,255,.96), rgba(255,255,255,.18) 42%, transparent 70%),
     linear-gradient(180deg, rgba(255,246,251,.98), rgba(239,243,255,.96));
@@ -55,6 +57,9 @@ body {
       calc(var(--my, 0) * var(--parallax-px, -8px)),
       0
     );
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+  transform-style: preserve-3d;
 }
 
 /* Tall viewports (< 16:9): scale by height instead */
@@ -69,6 +74,20 @@ body {
 .rcs-expression-stack {
   position: absolute;
   inset: 0;
+}
+
+.rcs-group,
+.rcs-ghost-viewport,
+.rcs-light-raster,
+.expression-layer--atlas {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rcs-group,
+.rcs-ghost-viewport,
+.expression-layer--atlas {
+  will-change: transform, opacity;
 }
 
 .rcs-stage img {
@@ -123,7 +142,7 @@ body {
   width: clamp(300px, 21vw, 400px);
   aspect-ratio: 406 / 470;
   z-index: 20;
-  transform: translate(35%, 25%);
+  transform: translate3d(35%, 25%, 0);
 }
 
 .rcs-ghost-viewport img {
@@ -133,11 +152,11 @@ body {
   object-fit: contain;
   pointer-events: none;
   user-select: none;
-  transition: filter 1.5s ease-in-out;
+  transition: opacity 1.5s ease-in-out;
 }
 
 .rcs-ghost-viewport img.ghost-blurred {
-  filter: blur(3px);
+  opacity: 0.94;
 }
 
 /* ─── Mobile / portrait optimizations ─── */
@@ -152,16 +171,16 @@ body {
   }
 }
 
-/* ─── Loading state: blurred scene behind light raster ─── */
+/* ─── Loading state: dimmed scene behind light raster ─── */
 
 .rcs-stage--loading .rcs-stage-inner {
-  filter: blur(12px) saturate(0.6);
-  transition: filter 0.8s ease-out;
+  opacity: 0.82;
+  transition: opacity 0.8s ease-out;
 }
 
 .rcs-stage:not(.rcs-stage--loading) .rcs-stage-inner {
-  filter: blur(0px) saturate(1);
-  transition: filter 1s ease-out;
+  opacity: 1;
+  transition: opacity 1s ease-out;
 }
 
 /* ─── Light raster entrance overlay ─── */

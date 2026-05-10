@@ -48,6 +48,7 @@ vi.mock('motion/react', async () => {
 })
 
 const appStyles = readFileSync(resolve(import.meta.dirname, 'app.css'), 'utf8')
+const previewSource = readFileSync(resolve(import.meta.dirname, 'CurtainSequencePreview.jsx'), 'utf8')
 const lightRasterCompleteMs = 1700
 const sceneEntryCompleteMs = Math.max(...sequenceOrder.map(({ delay, duration }) => delay + duration)) * 1000
 
@@ -172,6 +173,13 @@ describe('CurtainSequencePreview', () => {
     expect(document.querySelector('.rcs-group-gifts')).toHaveClass('has-scene-z-11')
     expect(document.querySelector('.rcs-ghost-viewport')).toBeInTheDocument()
     expect(document.querySelector('.rcs-group-mascot')).toHaveClass('has-scene-z-15')
+  })
+
+  it('avoids filter-based animation effects that can flicker on Android Chromium', () => {
+    expect(previewSource).not.toMatch(/\bfilter\s*:/)
+    expect(appStyles).not.toMatch(/\bfilter\s*:/)
+    expect(appStyles).toContain('backface-visibility: hidden')
+    expect(appStyles).toContain('will-change: transform, opacity')
   })
 })
 
