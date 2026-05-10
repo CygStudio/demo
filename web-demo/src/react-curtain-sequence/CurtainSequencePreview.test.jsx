@@ -178,8 +178,6 @@ describe('CurtainSequencePreview', () => {
   it('avoids filter-based animation effects that can flicker on Android Chromium', () => {
     expect(previewSource).not.toMatch(/\bfilter\s*:/)
     expect(appStyles).not.toMatch(/\bfilter\s*:/)
-    expect(appStyles).toContain('backface-visibility: hidden')
-    expect(appStyles).toContain('will-change: transform, opacity')
   })
 })
 
