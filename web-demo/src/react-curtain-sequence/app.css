@@ -133,11 +133,11 @@ body {
   object-fit: contain;
   pointer-events: none;
   user-select: none;
-  transition: filter 1.5s ease-in-out;
+  transition: opacity 1.5s ease-in-out;
 }
 
 .rcs-ghost-viewport img.ghost-blurred {
-  filter: blur(3px);
+  opacity: 0.94;
 }
 
 /* ─── Mobile / portrait optimizations ─── */
@@ -152,16 +152,16 @@ body {
   }
 }
 
-/* ─── Loading state: blurred scene behind light raster ─── */
+/* ─── Loading state: dimmed scene behind light raster ─── */
 
 .rcs-stage--loading .rcs-stage-inner {
-  filter: blur(12px) saturate(0.6);
-  transition: filter 0.8s ease-out;
+  opacity: 0.82;
+  transition: opacity 0.8s ease-out;
 }
 
 .rcs-stage:not(.rcs-stage--loading) .rcs-stage-inner {
-  filter: blur(0px) saturate(1);
-  transition: filter 1s ease-out;
+  opacity: 1;
+  transition: opacity 1s ease-out;
 }
 
 /* ─── Light raster entrance overlay ─── */
