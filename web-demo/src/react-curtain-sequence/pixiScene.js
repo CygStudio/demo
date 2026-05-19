@@ -255,6 +255,7 @@ export async function createPixiScene({
   canvas.style.height = '100%'
   canvas.style.position = 'absolute'
   canvas.style.inset = '0'
+  canvas.style.pointerEvents = 'none'
   container.appendChild(canvas)
   handle.canvas = canvas
 
