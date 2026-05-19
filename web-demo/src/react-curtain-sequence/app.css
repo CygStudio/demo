@@ -21,8 +21,11 @@ body {
 .rcs-stage {
   position: relative;
   width: 100vw;
-  height: 100dvh;
+  /* 100svh 避免 Android Chromium toolbar 顯隱時 viewport 反覆 relayout，
+     在 mix-blend-mode 圖層上會被觀察為整層白閃 */
+  height: 100svh;
   overflow: hidden;
+  isolation: isolate;
   background:
     radial-gradient(circle at 50% 14%, rgba(255,255,255,.96), rgba(255,255,255,.18) 42%, transparent 70%),
     linear-gradient(180deg, rgba(255,246,251,.98), rgba(239,243,255,.96));
@@ -47,6 +50,14 @@ body {
   width: calc(2283 / 1920 * 100%);
   height: auto;
 
+  /* 將整個舞台合成範圍隔離：
+     - isolation: isolate → mix-blend-mode 子層只與舞台內部混合，不被外層 backdrop 牽動
+     - contain: paint → 限制 paint invalidation 範圍，filter 動畫不會擴散到兄弟層
+     - will-change: transform → 預先取得獨立的 GPU 合成層，避免 parallax 變動觸發 re-raster */
+  isolation: isolate;
+  contain: paint;
+  will-change: transform;
+
   /* Center BG region (not canvas) in viewport */
   transform:
     translate(-50.46%, -47.47%)
@@ -69,6 +80,16 @@ body {
 .rcs-expression-stack {
   position: absolute;
   inset: 0;
+}
+
+/* 入場時對 6 個 group 同步動畫 filter: blur 是 Chromium Android 白閃的主因之一。
+   讓每個 group 各自擁有獨立合成層 + paint containment，
+   filter 動畫的 raster invalidation 不會擴散到含 mix-blend-mode 的兄弟層。 */
+.rcs-group {
+  isolation: isolate;
+  contain: paint;
+  will-change: filter, transform;
+  transform: translateZ(0);
 }
 
 .rcs-stage img {
@@ -101,7 +122,15 @@ body {
 .bg { z-index: 2; }
 .bg-decor { z-index: 3; }
 .decor { z-index: 5; }
-.light { z-index: 6; mix-blend-mode: screen; opacity: .58; }
+/* mix-blend-mode 圖層強制取得獨立合成層，
+   避免 Chromium Android 在兄弟層動畫 filter/transform 時把整個 blend group 重新 raster → 白閃 */
+.light {
+  z-index: 6;
+  mix-blend-mode: screen;
+  opacity: .58;
+  will-change: transform;
+  transform: translateZ(0);
+}
 .balloons.back { z-index: 7; }
 .balloons.mid { z-index: 8; }
 .character.back { z-index: 10; }
@@ -111,7 +140,12 @@ body {
 .expression-layer { z-index: 14; }
 .mascot.side,
 .mascot.cake { z-index: 15; }
-.fx { z-index: 18; mix-blend-mode: screen; }
+.fx {
+  z-index: 18;
+  mix-blend-mode: screen;
+  will-change: transform;
+  transform: translateZ(0);
+}
 
 /* ─── Ghost: viewport-relative, PSD-proportional size, 80% visible ─── */
 
@@ -123,7 +157,10 @@ body {
   width: clamp(300px, 21vw, 400px);
   aspect-ratio: 406 / 470;
   z-index: 20;
-  transform: translate(35%, 25%);
+  isolation: isolate;
+  contain: paint;
+  will-change: filter, transform;
+  transform: translate(35%, 25%) translateZ(0);
 }
 
 .rcs-ghost-viewport img {
