@@ -1,14 +1,12 @@
 import React from 'react'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  optimizedCurtainSceneGroups,
-} from './optimizedSceneData'
-import { sequenceOrder } from './sequenceConfig'
+import { optimizedCurtainSceneGroups } from './optimizedSceneData'
 import CurtainSequencePreview from './CurtainSequencePreview'
 
+// Mock motion/react: render plain DOM, fire onAnimationComplete after declared duration.
 vi.mock('motion/react', async () => {
   const ReactModule = await import('react')
   const { createElement, forwardRef, Fragment, useEffect } = ReactModule
@@ -21,18 +19,17 @@ vi.mock('motion/react', async () => {
       onAnimationComplete,
       transition,
       variants,
+      exit,
       ...domProps
     } = props
     const resolvedAnimate = typeof animate === 'string' && variants ? variants[animate] : animate
 
     useEffect(() => {
       if (!onAnimationComplete) return undefined
-
       const activeTransition = resolvedAnimate?.transition ?? transition
       const delayMs = (activeTransition?.delay ?? 0) * 1000
       const durationMs = (activeTransition?.duration ?? 0) * 1000
       const timer = window.setTimeout(() => onAnimationComplete(), delayMs + durationMs)
-
       return () => window.clearTimeout(timer)
     }, [animate, onAnimationComplete, resolvedAnimate, transition])
 
@@ -41,70 +38,45 @@ vi.mock('motion/react', async () => {
 
   return {
     AnimatePresence: ({ children }) => createElement(Fragment, null, children),
-    motion: new Proxy({}, {
-      get: (_, tag) => createMotionComponent(tag),
+    motion: new Proxy({}, { get: (_, tag) => createMotionComponent(tag) }),
+  }
+})
+
+// Mock pixiScene: jsdom has no WebGL. We expose a tiny fake handle and
+// invoke first-frame / intro-complete callbacks synchronously so React
+// state transitions can be exercised.
+vi.mock('./pixiScene', () => {
+  const sceneEntryCompleteMs = 7550
+  return {
+    sceneEntryCompleteMs,
+    createPixiScene: vi.fn(async ({ container, onFirstFrame, onIntroComplete }) => {
+      const canvas = document.createElement('canvas')
+      canvas.setAttribute('data-mock-pixi', 'true')
+      container?.appendChild(canvas)
+      // Notify first-frame synchronously so consumers can render the scene UI.
+      onFirstFrame?.()
+      // intro-complete fires on next macrotask so we can assert intermediate state.
+      const introTimer = window.setTimeout(() => onIntroComplete?.(), 0)
+      return {
+        destroy: () => {
+          window.clearTimeout(introTimer)
+          canvas.remove()
+        },
+        setPointerFromClient: vi.fn(),
+        clearPointer: vi.fn(),
+        cycleExpression: vi.fn(),
+        canvas,
+      }
     }),
   }
 })
 
 const appStyles = readFileSync(resolve(import.meta.dirname, 'app.css'), 'utf8')
-const lightRasterCompleteMs = 1732
-const sceneEntryCompleteMs = Math.max(...sequenceOrder.map(({ delay, duration }) => delay + duration)) * 1000
 let originalImage
 
-const expectedTangyuanLayout = optimizedCurtainSceneGroups.mascot.map(({ name, style }) => ({
-  name,
-  left: style.left,
-  top: style.top,
-  width: style.width,
-  height: style.height,
-}))
-
-function readTangyuanLayout() {
-  return optimizedCurtainSceneGroups.mascot.map(({ name }) => {
-    const node = screen.getByAltText(name)
-
-    return {
-      name,
-      left: node.style.left,
-      top: node.style.top,
-      width: node.style.width,
-      height: node.style.height,
-    }
-  })
-}
-
-function createMockRect({ left, top, width, height }) {
-  return {
-    x: left,
-    y: top,
-    left,
-    top,
-    width,
-    height,
-    right: left + width,
-    bottom: top + height,
-    toJSON() {
-      return this
-    },
-  }
-}
-
-function mockVisibleSceneRects({
-  stageRect = createMockRect({ left: 0, top: 0, width: 800, height: 500 }),
-  sceneRect = createMockRect({ left: -400, top: -100, width: 1600, height: 700 }),
-} = {}) {
-  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function getBoundingClientRect() {
-    if (this.dataset?.testid === 'curtain-stage') return stageRect
-    if (this.classList?.contains('rcs-stage-inner')) return sceneRect
-    return createMockRect({ left: 0, top: 0, width: 0, height: 0 })
-  })
-
-  return { stageRect, sceneRect }
-}
-
-async function flushPreloadMicrotasks() {
+async function flushAsync() {
   await act(async () => {
+    await Promise.resolve()
     await Promise.resolve()
     await Promise.resolve()
   })
@@ -113,51 +85,45 @@ async function flushPreloadMicrotasks() {
 beforeEach(() => {
   originalImage = globalThis.Image
   globalThis.Image = class {
-    decode() {
-      return Promise.resolve()
-    }
-
-    set src(_value) {
-      queueMicrotask(() => this.onload?.())
-    }
+    decode() { return Promise.resolve() }
+    set src(_value) { queueMicrotask(() => this.onload?.()) }
   }
 })
 
 afterEach(() => {
   globalThis.Image = originalImage
+  vi.clearAllMocks()
 })
 
 describe('CurtainSequencePreview', () => {
-  it('renders optimized scene groups and images', async () => {
+  it('mounts the stage with a PIXI canvas host', async () => {
     render(<CurtainSequencePreview />)
-    await flushPreloadMicrotasks()
+    await flushAsync()
 
     expect(screen.getByTestId('curtain-stage')).toBeInTheDocument()
-    expect(screen.getByAltText('character-body')).toBeInTheDocument()
-    expect(screen.getByAltText('cake-table')).toBeInTheDocument()
-    expect(screen.getByAltText('ghost-right')).toBeInTheDocument()
-    expect(screen.getByAltText('mascot-cake-1')).toBeInTheDocument()
-    expect(screen.getByAltText('mascot-cake-2')).toBeInTheDocument()
-    expect(screen.getByAltText('mascot-cake-3')).toBeInTheDocument()
-    expect(screen.getByAltText('mascot-cake-4')).toBeInTheDocument()
-    expect(screen.queryByAltText('mascot-cake')).not.toBeInTheDocument()
+    expect(document.querySelector('.rcs-pixi-host')).toBeInTheDocument()
+    expect(document.querySelector('.rcs-pixi-host canvas[data-mock-pixi="true"]')).toBeInTheDocument()
+  })
 
-    expect(document.querySelectorAll('.rcs-stage img')).toHaveLength(15)
-    expect(document.querySelectorAll('.rcs-group-mascot img')).toHaveLength(4)
-    expect(document.querySelector('.rcs-expression-stack [role="img"]')).toHaveAccessibleName('expr-c')
-    expect(document.querySelector('.rcs-group-character')).toBeInTheDocument()
-    expect(document.querySelector('.rcs-group-cake')).toBeInTheDocument()
+  it('renders ghost layers in the DOM after the ghost images preload', async () => {
+    render(<CurtainSequencePreview />)
+    await flushAsync()
+
+    for (const layer of optimizedCurtainSceneGroups.ghost) {
+      expect(screen.getByAltText(layer.name)).toBeInTheDocument()
+    }
+    expect(document.querySelector('.rcs-ghost-viewport')).toBeInTheDocument()
   })
 
   it('renders the artist credit with a safe external link', () => {
     render(<CurtainSequencePreview />)
 
-    const artistLink = screen.getByRole('link', { name: '奶油醬油' })
-    expect(artistLink.closest('p')).toHaveTextContent('Art by 奶油醬油 老師')
-    expect(artistLink).toHaveAttribute('href', 'https://x.com/CSS74134570')
-    expect(artistLink).toHaveAttribute('target', '_blank')
-    expect(artistLink).toHaveAttribute('rel', expect.stringContaining('noopener'))
-    expect(artistLink).toHaveAttribute('rel', expect.stringContaining('noreferrer'))
+    const link = screen.getByRole('link', { name: '奶油醬油' })
+    expect(link.closest('p')).toHaveTextContent('Art by 奶油醬油 老師')
+    expect(link).toHaveAttribute('href', 'https://x.com/CSS74134570')
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'))
+    expect(link).toHaveAttribute('rel', expect.stringContaining('noreferrer'))
   })
 
   it('keeps the artist credit layered above the light raster overlay', async () => {
@@ -167,129 +133,75 @@ describe('CurtainSequencePreview', () => {
 
     try {
       render(<CurtainSequencePreview />)
-      await flushPreloadMicrotasks()
+      await flushAsync()
 
       const artistCredit = document.querySelector('.rcs-artist-credit')
       const lightRaster = document.querySelector('.rcs-light-raster')
-      const rasterZIndex = Number.parseInt(window.getComputedStyle(lightRaster).zIndex, 10)
-      const artistCreditZIndex = Number.parseInt(window.getComputedStyle(artistCredit).zIndex, 10)
-
       expect(artistCredit).toBeInTheDocument()
       expect(lightRaster).toBeInTheDocument()
-      expect(rasterZIndex).toBe(100)
-      expect(artistCreditZIndex).toBeGreaterThan(100)
+      expect(Number.parseInt(window.getComputedStyle(lightRaster).zIndex, 10)).toBe(100)
+      expect(Number.parseInt(window.getComputedStyle(artistCredit).zIndex, 10)).toBeGreaterThan(100)
     } finally {
       style.remove()
     }
   })
 
-  it('preserves the original scene stacking order on group wrappers', async () => {
+  it('marks the stage as loading until the PIXI scene reports first frame', async () => {
+    let resolveFirstFrame
+    const { createPixiScene } = await import('./pixiScene')
+    createPixiScene.mockImplementationOnce(async ({ container, onFirstFrame }) => {
+      const canvas = document.createElement('canvas')
+      container?.appendChild(canvas)
+      await new Promise((r) => {
+        resolveFirstFrame = () => { onFirstFrame?.(); r() }
+      })
+      return {
+        destroy: () => canvas.remove(),
+        setPointerFromClient: vi.fn(),
+        clearPointer: vi.fn(),
+        cycleExpression: vi.fn(),
+      }
+    })
+
     render(<CurtainSequencePreview />)
-    await flushPreloadMicrotasks()
+    await flushAsync()
 
-    expect(document.querySelector('.rcs-group-character')).toHaveClass('has-scene-z-10')
-    expect(document.querySelector('.rcs-group-cake')).toHaveClass('has-scene-z-12')
-    expect(document.querySelector('.rcs-group-balloons')).toHaveClass('has-scene-z-7')
-    expect(document.querySelector('.rcs-group-gifts')).toHaveClass('has-scene-z-11')
-    expect(document.querySelector('.rcs-ghost-viewport')).toBeInTheDocument()
-    expect(document.querySelector('.rcs-group-mascot')).toHaveClass('has-scene-z-15')
-  })
-})
+    expect(screen.getByTestId('curtain-stage')).toHaveClass('rcs-stage--loading')
 
-describe('Curtain sequence interactions', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
-    vi.restoreAllMocks()
-    vi.unstubAllGlobals()
-  })
-
-  it('cycles expression atlas frames every 3 seconds', async () => {
-    render(<CurtainSequencePreview expressionIntervalMs={3000} />)
-    await flushPreloadMicrotasks()
-
-    expect(screen.getByRole('img', { name: 'expr-c' })).toHaveAttribute('data-active', 'true')
-    expect(document.querySelector('[data-transition-state="exiting"]')).not.toBeInTheDocument()
-
-    act(() => {
-      vi.advanceTimersByTime(3000)
+    await act(async () => {
+      resolveFirstFrame()
+      await Promise.resolve()
     })
 
-    expect(screen.getByRole('img', { name: 'expr-d' })).toHaveAttribute('data-active', 'true')
+    expect(screen.getByTestId('curtain-stage')).not.toHaveClass('rcs-stage--loading')
   })
 
-  it('keeps the previous expression atlas frame briefly as an exiting layer during transitions', async () => {
-    render(<CurtainSequencePreview expressionIntervalMs={3000} />)
-    await flushPreloadMicrotasks()
-
-    act(() => {
-      vi.advanceTimersByTime(3000)
-    })
-
-    expect(screen.getByRole('img', { name: 'expr-d' })).toHaveAttribute('data-active', 'true')
-    expect(screen.getByRole('img', { name: 'expr-c' })).toHaveAttribute('data-transition-state', 'exiting')
-  })
-
-  it('removes the exiting expression atlas frame after the fade-out completes', async () => {
-    render(<CurtainSequencePreview expressionIntervalMs={3000} />)
-    await flushPreloadMicrotasks()
-
-    act(() => {
-      vi.advanceTimersByTime(3000)
-    })
-
-    act(() => {
-      vi.advanceTimersByTime(400)
-    })
-
-    expect(screen.getByRole('img', { name: 'expr-d' })).toHaveAttribute('data-active', 'true')
-    expect(screen.queryByRole('img', { name: 'expr-c' })).not.toBeInTheDocument()
-    expect(document.querySelectorAll('.rcs-expression-stack [role="img"]')).toHaveLength(1)
-  })
-
-  it('keeps tangyuan at their original positions until scene entry completes', async () => {
+  it('reports Android iframe reduced mode is opt-in (default false outside Android iframe)', async () => {
     render(<CurtainSequencePreview />)
-    await flushPreloadMicrotasks()
+    await flushAsync()
 
-    expect(readTangyuanLayout()).toEqual(expectedTangyuanLayout)
-
-    act(() => {
-      vi.advanceTimersByTime(lightRasterCompleteMs)
-    })
-    await flushPreloadMicrotasks()
-
-    expect(readTangyuanLayout()).toEqual(expectedTangyuanLayout)
-
-    act(() => {
-      vi.advanceTimersByTime(sceneEntryCompleteMs - 1)
-    })
-
-    expect(readTangyuanLayout()).toEqual(expectedTangyuanLayout)
+    expect(screen.getByTestId('curtain-stage')).toHaveAttribute('data-android-iframe', 'false')
   })
 
-  it('keeps reduced-compositing mode opt-in under StrictMode', async () => {
-    render(
-      <React.StrictMode>
-        <CurtainSequencePreview />
-      </React.StrictMode>,
-    )
-    await flushPreloadMicrotasks()
-
-    act(() => {
-      vi.advanceTimersByTime(lightRasterCompleteMs)
+  it('cleans up the PIXI handle on unmount', async () => {
+    const { createPixiScene } = await import('./pixiScene')
+    const destroySpy = vi.fn()
+    createPixiScene.mockImplementationOnce(async ({ container, onFirstFrame }) => {
+      const canvas = document.createElement('canvas')
+      container?.appendChild(canvas)
+      onFirstFrame?.()
+      return {
+        destroy: destroySpy,
+        setPointerFromClient: vi.fn(),
+        clearPointer: vi.fn(),
+        cycleExpression: vi.fn(),
+      }
     })
-    await flushPreloadMicrotasks()
 
-    act(() => {
-      vi.advanceTimersByTime(sceneEntryCompleteMs + 96)
-    })
-    await flushPreloadMicrotasks()
+    const { unmount } = render(<CurtainSequencePreview />)
+    await flushAsync()
+    unmount()
 
-    const stage = screen.getByTestId('curtain-stage')
-    expect(stage).toHaveAttribute('data-android-iframe', 'false')
-    expect(document.querySelector('.rcs-stage-inner')).toBeInTheDocument()
+    expect(destroySpy).toHaveBeenCalled()
   })
 })

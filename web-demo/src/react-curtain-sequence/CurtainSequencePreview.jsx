@@ -1,515 +1,174 @@
-import React from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  BASE_W,
-  BASE_H,
   expressionAtlas,
-  initialSceneSrcs,
   optimizedCurtainSceneGroups,
-  optimizedMascotTangyuanMotionItems,
-  optimizedSceneBounds,
-  getScenePositionStyle,
 } from './optimizedSceneData'
-import {
-  getExpressionAtlasBackgroundPosition,
-  getExpressionAtlasBackgroundSize,
-} from './expressionAtlasSprite'
-import { loopMotion, sequenceOrder } from './sequenceConfig'
-import { createInitialFollowerItems, stepCursorFollower } from './cursorFollowerMotion'
+import { loopMotion } from './sequenceConfig'
 import { useImagePreload } from './useImagePreload'
+import { createPixiScene, sceneEntryCompleteMs } from './pixiScene'
 
-const sequenceByKey = Object.fromEntries(sequenceOrder.map((item) => [item.key, item]))
-const sceneEntryCompleteMs = Math.max(...sequenceOrder.map(({ delay, duration }) => delay + duration)) * 1000
-const introWarmupMs = 32
-const lightRasterCompleteMs = 1700
-const compositingBoostDurationMs = introWarmupMs + lightRasterCompleteMs + sceneEntryCompleteMs
-
-function buildInitialTangyuanItems() {
-  return createInitialFollowerItems(optimizedMascotTangyuanMotionItems)
-}
+const ghostLoopAmpY = (Math.max(...loopMotion.ghost.y) - Math.min(...loopMotion.ghost.y)) / 2
+const ghostLoopAmpRotateDeg = (Math.max(...loopMotion.ghost.rotate) - Math.min(...loopMotion.ghost.rotate)) / 2
 
 function detectAndroidChromiumIframe() {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') return false
-
   const userAgent = navigator.userAgent
   const isAndroid = /Android/i.test(userAgent)
   const isFirefox = /Firefox|FxiOS/i.test(userAgent)
   const isChromiumFamily = /Chrome|Chromium|CriOS|EdgA|SamsungBrowser/i.test(userAgent)
-
   let isEmbedded = false
-
   try {
     isEmbedded = window.self !== window.top
   } catch {
     isEmbedded = true
   }
-
   return isAndroid && isChromiumFamily && !isFirefox && isEmbedded
 }
 
-function buildEnterVariant(config) {
-  return {
-    hidden: {
-      opacity: 0,
-      x: config.x ?? 0,
-      y: config.y ?? 0,
-      scale: config.scale ?? 0.98,
-      filter: `blur(${config.blurFrom}px)`,
-    },
-    visible: {
-      opacity: 1,
-      x: 0,
-      y: 0,
-      scale: 1,
-      filter: 'blur(0px)',
-      transition: {
-        delay: config.delay,
-        duration: config.duration,
-        ease: [0.22, 1, 0.36, 1],
-      },
-    },
-  }
-}
-
-function getLoopForLayer(name) {
-  if (['character-hair-back', 'character-hair-front'].includes(name)) return loopMotion.hair
-  if (name === 'character-body') return loopMotion.breathe
-  if (name === 'balloons') return loopMotion.balloons
-  if (name === 'gifts') return loopMotion.gifts
-  if (name === 'ghost-right') return loopMotion.ghost
-  if (name === 'glow') return loopMotion.glow
-
-  return null
-}
-
-function LayerImage({ animateLoop = true, name, className, src, style }) {
-  const loop = animateLoop ? getLoopForLayer(name) : null
-
-  return (
-    <motion.img
-      alt={name}
-      animate={
-        loop
-          ? { ...loop, transition: { duration: loop.duration, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' } }
-          : undefined
-      }
-      className={className}
-      src={src}
-      style={style}
-    />
-  )
-}
-
-const expressionTransitionMs = 400
-const expressionTransition = { duration: expressionTransitionMs / 1000, ease: 'easeInOut' }
-
-function ExpressionAtlasLayer({ frameCount, frameIndex, shouldFadeIn = false, transitionState }) {
-  const frameName = expressionAtlas.frameNames[frameIndex]
-  const isActive = transitionState === 'active'
-
-  return (
-    <motion.div
-      aria-label={frameName}
-      animate={{ opacity: isActive ? 1 : 0 }}
-      className="expression-layer expression-layer--atlas"
-      data-active={String(isActive)}
-      data-transition-state={transitionState}
-      initial={{ opacity: isActive ? (shouldFadeIn ? 0 : 1) : 1 }}
-      key={`${transitionState}-${frameName}`}
-      role="img"
-      style={{
-        ...expressionAtlas.style,
-        backgroundImage: `url(${expressionAtlas.src})`,
-        backgroundPosition: getExpressionAtlasBackgroundPosition(frameIndex, frameCount),
-        backgroundSize: getExpressionAtlasBackgroundSize(frameCount),
-      }}
-      transition={expressionTransition}
-    />
-  )
-}
-
-function ExpressionAtlas({ activeExpression, exitingExpression }) {
-  const frameCount = expressionAtlas.frameNames.length
-  const hasExitingLayer = typeof exitingExpression === 'number' && exitingExpression !== activeExpression
-
-  return (
-    <>
-      {hasExitingLayer && (
-        <ExpressionAtlasLayer
-          frameCount={frameCount}
-          frameIndex={exitingExpression}
-          transitionState="exiting"
-        />
-      )}
-      <ExpressionAtlasLayer
-        frameCount={frameCount}
-        frameIndex={activeExpression}
-        shouldFadeIn={hasExitingLayer}
-        transitionState="active"
-      />
-    </>
-  )
-}
-
-function renderGroup(layers, { animateLoop = true } = {}) {
-  return layers.map((layer) => <LayerImage key={layer.name} animateLoop={animateLoop} {...layer} />)
-}
-
-const groupSceneClasses = {
-  character: 'has-scene-z-10',
-  cake: 'has-scene-z-12',
-  balloons: 'has-scene-z-7',
-  gifts: 'has-scene-z-11',
-  ghost: 'has-scene-z-15',
-  mascot: 'has-scene-z-15',
-}
-
 export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) {
-  const initialSceneImages = useMemo(() => initialSceneSrcs, [])
-  const { error: preloadError, ready: assetsReady } = useImagePreload(initialSceneImages)
-  const isReducedCompositing = useMemo(() => detectAndroidChromiumIframe(), [])
-  const [introReady, setIntroReady] = useState(false)
-  const [lightRasterDone, setLightRasterDone] = useState(false)
-  const [entryCompositingActive, setEntryCompositingActive] = useState(false)
-  const shouldRenderScene = assetsReady
-  const showSequence = introReady && lightRasterDone
-
-  const sequenceKey = 0
-  const [pointer, setPointer] = useState({ x: 0, y: 0 })
-  const [expressionTransitionState, setExpressionTransitionState] = useState({
-    active: expressionAtlas.activeIndex,
-    exiting: null,
-  })
-  const [ghostEntryDone, setGhostEntryDone] = useState(false)
-  const [mascotTangyuanState, setMascotTangyuanState] = useState(() => ({
-    items: buildInitialTangyuanItems(),
-    mode: 'home',
-  }))
-  const mascotTangyuanItems = mascotTangyuanState.items
-  const tangyuanFrameRef = useRef(null)
-  const tangyuanMotionTimerRef = useRef(null)
-  const tangyuanLastTimestampRef = useRef(null)
-  const tangyuanSkipBootstrapFrameRef = useRef(false)
-  const pointerSceneRef = useRef(null)
-  const followerStartMsRef = useRef(0)
-
-  const groupVariants = useMemo(
-    () => ({
-      character: buildEnterVariant(sequenceByKey.character),
-      cake: buildEnterVariant(sequenceByKey.cake),
-      balloons: buildEnterVariant(sequenceByKey.balloons),
-      gifts: buildEnterVariant(sequenceByKey.gifts),
-      ghost: buildEnterVariant(sequenceByKey.ghost),
-      mascot: buildEnterVariant(sequenceByKey.mascot),
-    }),
+  // Only preload DOM ghost images here; PIXI handles its own asset loading.
+  const ghostSrcs = useMemo(
+    () => optimizedCurtainSceneGroups.ghost.map((layer) => layer.src),
     [],
   )
+  const { error: preloadError, ready: ghostReady } = useImagePreload(ghostSrcs)
 
+  const isReducedCompositing = useMemo(() => detectAndroidChromiumIframe(), [])
+
+  const stageRef = useRef(null)
+  const pixiContainerRef = useRef(null)
+  const sceneHandleRef = useRef(null)
+
+  const [pixiReady, setPixiReady] = useState(false)
+  const [introComplete, setIntroComplete] = useState(false)
+  const [lightRasterDone, setLightRasterDone] = useState(false)
+  const [ghostEntryDone, setGhostEntryDone] = useState(false)
+  const [pixiError, setPixiError] = useState(null)
+
+  const showSequence = pixiReady
+
+  // ---- Mount PIXI ----
   useEffect(() => {
-    setIntroReady(false)
-    setLightRasterDone(false)
-    setGhostEntryDone(false)
-    setEntryCompositingActive(false)
+    let cancelled = false
+    const container = pixiContainerRef.current
+    if (!container) return undefined
 
-    if (!assetsReady) return void 0
-
-    setEntryCompositingActive(true)
-
-    const introTimer = window.setTimeout(() => {
-      setIntroReady(true)
-    }, introWarmupMs)
-    const boostTimer = window.setTimeout(() => {
-      setEntryCompositingActive(false)
-    }, compositingBoostDurationMs)
-
-    return () => {
-      window.clearTimeout(introTimer)
-      window.clearTimeout(boostTimer)
-    }
-  }, [assetsReady])
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setExpressionTransitionState((current) => ({
-        active: (current.active + 1) % expressionAtlas.frameNames.length,
-        exiting: current.active,
-      }))
-    }, expressionIntervalMs)
-
-    return () => window.clearInterval(timer)
-  }, [expressionIntervalMs])
-
-  useEffect(() => {
-    if (typeof expressionTransitionState.exiting !== 'number') return undefined
-
-    const timer = window.setTimeout(() => {
-      setExpressionTransitionState((current) => (
-        current.exiting === expressionTransitionState.exiting
-          ? { ...current, exiting: null }
-          : current
-      ))
-    }, expressionTransitionMs)
-
-    return () => window.clearTimeout(timer)
-  }, [expressionTransitionState.exiting])
-
-  useEffect(() => {
-    setMascotTangyuanState({
-      items: buildInitialTangyuanItems(),
-      mode: 'home',
+    createPixiScene({
+      container,
+      reduced: isReducedCompositing,
+      onFirstFrame: () => {
+        if (cancelled) return
+        setPixiReady(true)
+      },
+      onIntroComplete: () => {
+        if (cancelled) return
+        setIntroComplete(true)
+      },
     })
-    tangyuanLastTimestampRef.current = null
-    tangyuanSkipBootstrapFrameRef.current = false
-    followerStartMsRef.current = 0
-
-    if (tangyuanMotionTimerRef.current !== null) {
-      window.clearTimeout(tangyuanMotionTimerRef.current)
-      tangyuanMotionTimerRef.current = null
-    }
-
-    if (tangyuanFrameRef.current !== null) {
-      window.cancelAnimationFrame(tangyuanFrameRef.current)
-      tangyuanFrameRef.current = null
-    }
-
-    if (!showSequence) return undefined
-
-    tangyuanMotionTimerRef.current = window.setTimeout(() => {
-      tangyuanSkipBootstrapFrameRef.current = true
-
-      const tick = (timestamp) => {
-        if (tangyuanSkipBootstrapFrameRef.current) {
-          tangyuanSkipBootstrapFrameRef.current = false
-          tangyuanLastTimestampRef.current = timestamp
-          followerStartMsRef.current = timestamp
-          tangyuanFrameRef.current = window.requestAnimationFrame(tick)
+      .then((handle) => {
+        if (cancelled) {
+          handle.destroy()
           return
         }
-
-        const dtMs = tangyuanLastTimestampRef.current === null
-          ? 16
-          : timestamp - tangyuanLastTimestampRef.current
-        const elapsedMs = timestamp - followerStartMsRef.current
-        const pointer = pointerSceneRef.current
-
-        tangyuanLastTimestampRef.current = timestamp
-
-        setMascotTangyuanState((current) => {
-          const next = stepCursorFollower({
-            items: current.items,
-            pointer,
-            mode: current.mode,
-            dtMs,
-            elapsedMs,
-            bounds: optimizedSceneBounds,
-          })
-          return next
-        })
-
-        tangyuanFrameRef.current = window.requestAnimationFrame(tick)
-      }
-
-      tangyuanFrameRef.current = window.requestAnimationFrame(tick)
-    }, sceneEntryCompleteMs)
+        sceneHandleRef.current = handle
+      })
+      .catch((error) => {
+        if (cancelled) return
+        console.error('createPixiScene failed', error)
+        setPixiError(error)
+      })
 
     return () => {
-      tangyuanSkipBootstrapFrameRef.current = false
-
-      if (tangyuanMotionTimerRef.current !== null) {
-        window.clearTimeout(tangyuanMotionTimerRef.current)
-        tangyuanMotionTimerRef.current = null
-      }
-
-      if (tangyuanFrameRef.current !== null) {
-        window.cancelAnimationFrame(tangyuanFrameRef.current)
-        tangyuanFrameRef.current = null
-      }
+      cancelled = true
+      const handle = sceneHandleRef.current
+      sceneHandleRef.current = null
+      if (handle) handle.destroy()
     }
-  }, [showSequence])
+  }, [isReducedCompositing])
 
+  // ---- Drive expression cycling from React (kept as canonical timer) ----
+  useEffect(() => {
+    if (!pixiReady) return undefined
+    const timer = window.setInterval(() => {
+      sceneHandleRef.current?.cycleExpression?.()
+    }, expressionIntervalMs)
+    return () => window.clearInterval(timer)
+  }, [expressionIntervalMs, pixiReady])
+
+  // ---- Ghost entry timing (after scene-entry completes) ----
+  useEffect(() => {
+    if (!introComplete) {
+      setGhostEntryDone(false)
+      return undefined
+    }
+    // ghost group is the last to fade in inside PIXI; use sequence end as canonical
+    const timer = window.setTimeout(() => setGhostEntryDone(true), 800)
+    return () => window.clearTimeout(timer)
+  }, [introComplete])
+
+  // ---- Pointer handlers ----
   function handlePointerMove(event) {
     if (isReducedCompositing) return
-
-    const rect = event.currentTarget.getBoundingClientRect()
-    const normalizedX = (event.clientX - rect.left) / rect.width - 0.5
-    const normalizedY = (event.clientY - rect.top) / rect.height - 0.5
-    setPointer({ x: Number(normalizedX.toFixed(3)), y: Number(normalizedY.toFixed(3)) })
-
-    const sceneX = ((event.clientX - rect.left) / rect.width) * BASE_W
-    const sceneY = ((event.clientY - rect.top) / rect.height) * BASE_H
-    pointerSceneRef.current = { x: sceneX, y: sceneY }
+    sceneHandleRef.current?.setPointerFromClient(event.clientX, event.clientY)
   }
-
   function handlePointerLeave() {
-    if (isReducedCompositing) {
-      pointerSceneRef.current = null
-      return
-    }
-
-    setPointer({ x: 0, y: 0 })
-    pointerSceneRef.current = null
+    sceneHandleRef.current?.clearPointer()
   }
+
+  const stageClass = [
+    'rcs-stage',
+    !showSequence ? 'rcs-stage--loading' : '',
+  ].filter(Boolean).join(' ')
 
   return (
     <div
-      className={`rcs-stage ${!showSequence ? 'rcs-stage--loading' : ''}`}
+      className={stageClass}
       data-android-iframe={String(isReducedCompositing)}
-      data-load-error={preloadError?.message ?? undefined}
-      data-sequence-key={sequenceKey}
+      data-load-error={preloadError?.message ?? pixiError?.message ?? undefined}
       data-testid="curtain-stage"
       onPointerLeave={handlePointerLeave}
       onPointerMove={handlePointerMove}
-      style={{
-        '--mx': isReducedCompositing ? 0 : pointer.x,
-        '--my': isReducedCompositing ? 0 : pointer.y,
-      }}
+      ref={stageRef}
     >
-      {shouldRenderScene && (
-        <>
+      <div className="rcs-pixi-host" ref={pixiContainerRef} />
+
+      {/* Ghost: viewport-pinned (bottom-right). Two layered images, crossfade on entry-complete. */}
+      {ghostReady && (
+        <div
+          className={[
+            'rcs-ghost-viewport',
+            !showSequence ? 'rcs-ghost-viewport--hidden' : '',
+          ].filter(Boolean).join(' ')}
+        >
           <motion.div
-            className={[
-              'rcs-stage-inner',
-              entryCompositingActive ? 'rcs-stage-inner--entry-boost' : '',
-              isReducedCompositing ? 'rcs-stage-inner--reduced-compositing' : '',
-            ].filter(Boolean).join(' ')}
-            initial={false}
-            key={sequenceKey}
+            className="rcs-ghost-loop"
+            animate={showSequence
+              ? { y: [0, -ghostLoopAmpY, 0], rotate: [0, ghostLoopAmpRotateDeg, 0] }
+              : { y: 0, rotate: 0 }}
+            transition={{
+              duration: loopMotion.ghost.duration,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: 'easeInOut',
+            }}
           >
-            {renderGroup(optimizedCurtainSceneGroups.background)}
-
-            <motion.div
-              animate={showSequence ? 'visible' : 'hidden'}
-              className={[
-                'rcs-group',
-                'rcs-group-character',
-                groupSceneClasses.character,
-                entryCompositingActive ? 'rcs-group--entry-boost' : '',
-                isReducedCompositing ? 'rcs-group--reduced-compositing' : '',
-              ].filter(Boolean).join(' ')}
-              initial="hidden"
-              variants={groupVariants.character}
-            >
-              {renderGroup(optimizedCurtainSceneGroups.character)}
-              <div className="rcs-expression-stack">
-                <ExpressionAtlas
-                  activeExpression={expressionTransitionState.active}
-                  exitingExpression={expressionTransitionState.exiting}
-                />
-              </div>
-            </motion.div>
-
-            <motion.div
-              animate={showSequence ? 'visible' : 'hidden'}
-              className={[
-                'rcs-group',
-                'rcs-group-cake',
-                groupSceneClasses.cake,
-                entryCompositingActive ? 'rcs-group--entry-boost' : '',
-                isReducedCompositing ? 'rcs-group--reduced-compositing' : '',
-              ].filter(Boolean).join(' ')}
-              initial="hidden"
-              variants={groupVariants.cake}
-            >
-              {renderGroup(optimizedCurtainSceneGroups.cake)}
-            </motion.div>
-            <motion.div
-              animate={showSequence ? 'visible' : 'hidden'}
-              className={[
-                'rcs-group',
-                'rcs-group-balloons',
-                groupSceneClasses.balloons,
-                entryCompositingActive ? 'rcs-group--entry-boost' : '',
-                isReducedCompositing ? 'rcs-group--reduced-compositing' : '',
-              ].filter(Boolean).join(' ')}
-              initial="hidden"
-              variants={groupVariants.balloons}
-            >
-              {renderGroup(optimizedCurtainSceneGroups.balloons)}
-            </motion.div>
-            <motion.div
-              animate={showSequence ? 'visible' : 'hidden'}
-              className={[
-                'rcs-group',
-                'rcs-group-gifts',
-                groupSceneClasses.gifts,
-                entryCompositingActive ? 'rcs-group--entry-boost' : '',
-                isReducedCompositing ? 'rcs-group--reduced-compositing' : '',
-              ].filter(Boolean).join(' ')}
-              initial="hidden"
-              variants={groupVariants.gifts}
-            >
-              {renderGroup(optimizedCurtainSceneGroups.gifts)}
-            </motion.div>
-            <motion.div
-              animate={showSequence ? 'visible' : 'hidden'}
-              className={[
-                'rcs-group',
-                'rcs-group-mascot',
-                groupSceneClasses.mascot,
-                entryCompositingActive ? 'rcs-group--entry-boost' : '',
-                isReducedCompositing ? 'rcs-group--reduced-compositing' : '',
-              ].filter(Boolean).join(' ')}
-              initial="hidden"
-              variants={groupVariants.mascot}
-            >
-              {mascotTangyuanItems.map((layer) => (
+            {optimizedCurtainSceneGroups.ghost.map((layer) => {
+              const isBlurred = layer.name === 'ghost-right-blurred'
+              return (
                 <img
                   key={layer.name}
                   alt={layer.name}
-                  className={`${layer.className} rcs-mascot-tangyuan`}
+                  className={
+                    isBlurred
+                      ? `ghost-blurred-img${ghostEntryDone ? ' is-active' : ''}`
+                      : 'ghost-sharp-img'
+                  }
                   src={layer.src}
-                  style={getScenePositionStyle(layer)}
                 />
-              ))}
-            </motion.div>
-
-            {renderGroup(optimizedCurtainSceneGroups.fx, { animateLoop: !isReducedCompositing })}
+              )
+            })}
           </motion.div>
-
-          {/* Ghost positioned relative to viewport (bottom-right), PSD-proportional size, 80% visible */}
-          <motion.div
-            animate={showSequence ? 'visible' : 'hidden'}
-            className={[
-              'rcs-ghost-viewport',
-              entryCompositingActive ? 'rcs-ghost-viewport--entry-boost' : '',
-              isReducedCompositing ? 'rcs-ghost-viewport--reduced-compositing' : '',
-            ].filter(Boolean).join(' ')}
-            initial="hidden"
-            key={`ghost-${sequenceKey}`}
-            variants={groupVariants.ghost}
-            onAnimationComplete={() => { if (showSequence) setGhostEntryDone(true) }}
-          >
-            <motion.div
-              className="rcs-ghost-loop"
-              animate={{
-                y: loopMotion.ghost.y,
-                rotate: loopMotion.ghost.rotate,
-              }}
-              transition={{
-                duration: loopMotion.ghost.duration,
-                repeat: Number.POSITIVE_INFINITY,
-                ease: 'easeInOut',
-              }}
-            >
-              {optimizedCurtainSceneGroups.ghost.map((layer) => {
-                const isBlurred = layer.name === 'ghost-right-blurred'
-                return (
-                  <img
-                    key={layer.name}
-                    alt={layer.name}
-                    className={
-                      isBlurred
-                        ? `ghost-blurred-img${ghostEntryDone ? ' is-active' : ''}`
-                        : 'ghost-sharp-img'
-                    }
-                    src={layer.src}
-                  />
-                )
-              })}
-            </motion.div>
-          </motion.div>
-        </>
+        </div>
       )}
 
       {/* Light raster entrance overlay */}
@@ -524,21 +183,21 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
             <motion.div
               className="rcs-light-raster__beam rcs-light-raster__beam--1"
               initial={{ x: '-110%' }}
-              animate={introReady ? { x: '110%' } : { x: '-110%' }}
+              animate={showSequence ? { x: '110%' } : { x: '-110%' }}
               transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
             />
             <motion.div
               className="rcs-light-raster__beam rcs-light-raster__beam--2"
               initial={{ x: '110%' }}
-              animate={introReady ? { x: '-110%' } : { x: '110%' }}
+              animate={showSequence ? { x: '-110%' } : { x: '110%' }}
               transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
             />
             <motion.div
               className="rcs-light-raster__beam rcs-light-raster__beam--3"
               initial={{ x: '-110%' }}
-              animate={introReady ? { x: '110%' } : { x: '-110%' }}
+              animate={showSequence ? { x: '110%' } : { x: '-110%' }}
               transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
-              onAnimationComplete={() => { if (introReady) setLightRasterDone(true) }}
+              onAnimationComplete={() => { if (showSequence) setLightRasterDone(true) }}
             />
           </motion.div>
         )}
@@ -554,3 +213,7 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
     </div>
   )
 }
+
+// Suppress unused warnings for values exposed only for tests / future use
+void expressionAtlas
+void sceneEntryCompleteMs

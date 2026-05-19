@@ -16,169 +16,58 @@ body {
   box-sizing: border-box;
 }
 
-/* ─── Fullscreen stage ─── */
+/* ─── Fullscreen stage ───
+ * Pure container. Background gradient kept (visible before PIXI canvas finishes first frame).
+ * Crucially: no mix-blend-mode, no CSS filter animation, no containment that triggers
+ * Android Chromium compositor bugs — all of that has been moved into the PIXI canvas.
+ */
 
 .rcs-stage {
   position: relative;
   width: 100vw;
-  /* 100svh 避免 Android Chromium toolbar 顯隱時 viewport 反覆 relayout，
-     在 mix-blend-mode 圖層上會被觀察為整層白閃 */
   height: 100svh;
   overflow: hidden;
-  isolation: isolate;
   background:
     radial-gradient(circle at 50% 14%, rgba(255,255,255,.96), rgba(255,255,255,.18) 42%, transparent 70%),
     linear-gradient(180deg, rgba(255,246,251,.98), rgba(239,243,255,.96));
 }
 
-/* ─── Cover-scaled scene inner (bleed crop) ───
- *
- * Canvas: 2283×1302   Background: 1920×1080 at [192,78]
- * BG center in canvas: x=50.46% y=47.47%
- *
- * Default: scale by width (landscape / wide viewports)
- * Override: scale by height (portrait / tall viewports)
- */
+/* ─── PIXI canvas host ─── */
 
-.rcs-stage-inner {
-  position: absolute;
-  aspect-ratio: 2283 / 1302;
-  left: 50%;
-  top: 50%;
-
-  /* canvas/bg width ratio → BG fills viewport width */
-  width: calc(2283 / 1920 * 100%);
-  height: auto;
-
-  /* 將整個舞台合成範圍隔離：
-     - isolation: isolate → mix-blend-mode 子層只與舞台內部混合，不被外層 backdrop 牽動
-     - contain: paint → 限制 paint invalidation 範圍，filter 動畫不會擴散到兄弟層
-     - will-change 僅在入場期短暫啟用，避免長時間佔住 GPU layer */
-  isolation: isolate;
-  contain: paint;
-
-  /* Center BG region (not canvas) in viewport */
-  transform:
-    translate(-50.46%, -47.47%)
-    translate3d(
-      calc(var(--mx, 0) * var(--parallax-px, -8px)),
-      calc(var(--my, 0) * var(--parallax-px, -8px)),
-      0
-    );
-}
-
-/* Tall viewports (< 16:9): scale by height instead */
-@media (max-aspect-ratio: 16/9) {
-  .rcs-stage-inner {
-    width: auto;
-    height: calc(1302 / 1080 * 100%);
-  }
-}
-
-.rcs-group,
-.rcs-expression-stack {
+.rcs-pixi-host {
   position: absolute;
   inset: 0;
+  z-index: 1;
 }
 
-/* 入場時對 6 個 group 同步動畫 filter: blur 是 Chromium Android 白閃的主因之一。
-   讓每個 group 各自擁有獨立合成層 + paint containment，
-   filter 動畫的 raster invalidation 不會擴散到含 mix-blend-mode 的兄弟層。 */
-.rcs-group {
-  isolation: isolate;
-  contain: paint;
+.rcs-pixi-host canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-.rcs-stage-inner--entry-boost {
-  will-change: transform;
-}
-
-.rcs-group--entry-boost {
-  will-change: filter, transform;
-}
-
-.rcs-stage img {
-  position: absolute;
-  object-fit: fill;
-  pointer-events: none;
-  user-select: none;
-}
-
-/* ─── Z-index scene stacking ─── */
-
-.has-scene-z-7 { z-index: 7; }
-.has-scene-z-10 { z-index: 10; }
-.has-scene-z-11 { z-index: 11; }
-.has-scene-z-12 { z-index: 12; }
-.has-scene-z-15 { z-index: 15; }
-
-.expression-layer {
-  opacity: 0;
-}
-
-.expression-layer--atlas {
-  position: absolute;
-  background-repeat: no-repeat;
-  pointer-events: none;
-  user-select: none;
-}
-
-.paper { z-index: 1; }
-.bg { z-index: 2; }
-.bg-decor { z-index: 3; }
-.decor { z-index: 5; }
-/* mix-blend-mode 圖層強制取得獨立合成層，
-   避免 Chromium Android 在兄弟層動畫 filter/transform 時把整個 blend group 重新 raster → 白閃 */
-.light {
-  z-index: 6;
-  mix-blend-mode: screen;
-  opacity: .58;
-}
-.balloons.back { z-index: 7; }
-.balloons.mid { z-index: 8; }
-.character.back { z-index: 10; }
-.props { z-index: 11; }
-.cake { z-index: 12; }
-.character.front,
-.expression-layer { z-index: 14; }
-.mascot.side,
-.mascot.cake { z-index: 15; }
-.fx {
-  z-index: 18;
-  mix-blend-mode: screen;
-}
-
-.rcs-group--entry-boost .light,
-.rcs-group--entry-boost .fx {
-  will-change: transform;
-}
-
-/* ─── Ghost: viewport-relative, PSD-proportional size, 80% visible ─── */
+/* ─── Ghost: viewport-pinned bottom-right, PSD-proportional size ─── */
 
 .rcs-ghost-viewport {
   position: absolute;
   right: -50px;
   bottom: -50px;
-  /* width: clamp(140px, 21vw, 400px); */
   width: clamp(300px, 21vw, 400px);
   aspect-ratio: 406 / 470;
   z-index: 20;
-  isolation: isolate;
-  contain: paint;
   transform: translate(35%, 25%);
+  opacity: 1;
+  transition: opacity 600ms ease-out;
+  pointer-events: none;
 }
 
-.rcs-ghost-viewport--entry-boost {
-  will-change: filter, transform;
+.rcs-ghost-viewport--hidden {
+  opacity: 0;
 }
 
 .rcs-ghost-loop {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 12px;
-  bottom: 0;
-  height: 100%;
+  inset: 0;
 }
 
 .rcs-ghost-viewport img {
@@ -190,8 +79,9 @@ body {
   user-select: none;
 }
 
-/* 模糊版圖片由美術師直接繪製，自帶 blur halo（原始 415×480 比清晰版 406×470 略大）。
-   以中心對齊放大，使其 halo 範圍正確顯示，而非被 object-fit: contain 縮回原本尺寸。 */
+/* Blurred ghost is the hand-painted halo variant (415×480 vs sharp 406×470).
+ * Scale slightly larger so the halo extends correctly; crossfade in once entry completes.
+ */
 .rcs-ghost-viewport .ghost-blurred-img {
   width: calc(100% * 415 / 406);
   height: calc(100% * 480 / 470);
@@ -199,51 +89,11 @@ body {
   top: 50%;
   transform: translate(-50%, -50%);
   opacity: 0;
-  /* 入場完成後淡入：以圖片切換取代 CSS filter 動畫，
-     完全避開 Chromium Android 對 filter 動畫的 re-raster 白閃 bug */
   transition: opacity 1.5s ease-in-out;
 }
 
 .rcs-ghost-viewport .ghost-blurred-img.is-active {
   opacity: 1;
-}
-
-/* ─── Mobile / portrait optimizations ─── */
-
-@media (max-aspect-ratio: 4/3) {
-  .rcs-stage-inner {
-    --parallax-px: -3px;
-  }
-
-  .rcs-ghost-viewport {
-    /* width: clamp(120px, 18dvh, 240px); */
-  }
-
-  .rcs-stage-inner--reduced-compositing {
-    --parallax-px: 0px;
-  }
-
-  .rcs-group--reduced-compositing,
-  .rcs-ghost-viewport--reduced-compositing {
-    will-change: auto;
-  }
-
-  .rcs-group--reduced-compositing .light,
-  .rcs-group--reduced-compositing .fx {
-    will-change: auto;
-  }
-}
-
-/* ─── Loading state: blurred scene behind light raster ─── */
-
-.rcs-stage--loading .rcs-stage-inner {
-  filter: blur(12px) saturate(0.6);
-  transition: filter 0.8s ease-out;
-}
-
-.rcs-stage:not(.rcs-stage--loading) .rcs-stage-inner {
-  filter: blur(0px) saturate(1);
-  transition: filter 1s ease-out;
 }
 
 /* ─── Light raster entrance overlay ─── */
@@ -296,6 +146,8 @@ body {
   transform: skewX(-6deg);
   opacity: 0.5;
 }
+
+/* ─── Artist credit ─── */
 
 .rcs-artist-credit {
   position: fixed;
