@@ -26,6 +26,14 @@ function detectAndroidChromiumIframe() {
   return isAndroid && isChromiumFamily && !isFirefox && isEmbedded
 }
 
+function detectFinePointer() {
+  if (typeof window === 'undefined') return true
+  if (typeof window.matchMedia !== 'function') {
+    return (navigator?.maxTouchPoints ?? 0) === 0
+  }
+  return window.matchMedia('(hover: hover) and (pointer: fine)').matches
+}
+
 export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) {
   // Only preload DOM ghost images here; PIXI handles its own asset loading.
   const ghostSrcs = useMemo(
@@ -35,6 +43,10 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
   const { error: preloadError, ready: ghostReady } = useImagePreload(ghostSrcs)
 
   const isReducedCompositing = useMemo(() => detectAndroidChromiumIframe(), [])
+  const enablePointerParallax = useMemo(
+    () => !isReducedCompositing && detectFinePointer(),
+    [isReducedCompositing],
+  )
 
   const stageRef = useRef(null)
   const pixiContainerRef = useRef(null)
@@ -120,10 +132,11 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
 
   // ---- Pointer handlers ----
   function handlePointerMove(event) {
-    if (isReducedCompositing) return
+    if (!enablePointerParallax || event.pointerType === 'touch' || event.pointerType === 'pen') return
     sceneHandleRef.current?.setPointerFromClient(event.clientX, event.clientY)
   }
   function handlePointerLeave() {
+    if (!enablePointerParallax) return
     sceneHandleRef.current?.clearPointer()
   }
 
@@ -137,9 +150,10 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
       className={stageClass}
       data-android-iframe={String(isReducedCompositing)}
       data-load-error={preloadError?.message ?? pixiError?.message ?? undefined}
+      data-pointer-parallax={String(enablePointerParallax)}
       data-testid="curtain-stage"
-      onPointerLeave={handlePointerLeave}
-      onPointerMove={handlePointerMove}
+      onPointerLeave={enablePointerParallax ? handlePointerLeave : void 0}
+      onPointerMove={enablePointerParallax ? handlePointerMove : void 0}
       ref={stageRef}
     >
       <div className="rcs-pixi-host" ref={pixiContainerRef} />

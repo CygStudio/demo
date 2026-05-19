@@ -73,6 +73,7 @@ vi.mock('./pixiScene', () => {
 
 const appStyles = readFileSync(resolve(import.meta.dirname, 'app.css'), 'utf8')
 let originalImage
+let originalMatchMedia
 
 async function flushAsync() {
   await act(async () => {
@@ -84,14 +85,26 @@ async function flushAsync() {
 
 beforeEach(() => {
   originalImage = globalThis.Image
+  originalMatchMedia = window.matchMedia
   globalThis.Image = class {
     decode() { return Promise.resolve() }
     set src(_value) { queueMicrotask(() => this.onload?.()) }
   }
+  window.matchMedia = vi.fn((query) => ({
+    matches: query === '(hover: hover) and (pointer: fine)',
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }))
 })
 
 afterEach(() => {
   globalThis.Image = originalImage
+  window.matchMedia = originalMatchMedia
   vi.clearAllMocks()
 })
 
@@ -181,6 +194,30 @@ describe('CurtainSequencePreview', () => {
     await flushAsync()
 
     expect(screen.getByTestId('curtain-stage')).toHaveAttribute('data-android-iframe', 'false')
+  })
+
+  it('keeps pointer parallax enabled by default on fine pointers', async () => {
+    render(<CurtainSequencePreview />)
+    await flushAsync()
+
+    expect(screen.getByTestId('curtain-stage')).toHaveAttribute('data-pointer-parallax', 'true')
+  })
+
+  it('disables pointer parallax on coarse touch devices so scrolling stays native', async () => {
+    window.matchMedia = vi.fn((query) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }))
+    render(<CurtainSequencePreview />)
+    await flushAsync()
+
+    expect(screen.getByTestId('curtain-stage')).toHaveAttribute('data-pointer-parallax', 'false')
   })
 
   it('cleans up the PIXI handle on unmount', async () => {

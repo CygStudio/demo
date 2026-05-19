@@ -9,7 +9,9 @@ body {
   font-family: Inter, 'Noto Sans TC', system-ui, sans-serif;
   background: #1a1018;
   color: #3c2c45;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 * {
@@ -27,6 +29,7 @@ body {
   width: 100vw;
   height: 100svh;
   overflow: hidden;
+  touch-action: pan-y pinch-zoom;
   background:
     radial-gradient(circle at 50% 14%, rgba(255,255,255,.96), rgba(255,255,255,.18) 42%, transparent 70%),
     linear-gradient(180deg, rgba(255,246,251,.98), rgba(239,243,255,.96));
