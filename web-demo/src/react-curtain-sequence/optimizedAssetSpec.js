@@ -105,6 +105,12 @@ export const optimizedAssetSpec = [
     loop: 'ghost',
     sources: [source('ghost-right', '055_婚叫_1.png')],
   },
+  {
+    name: 'ghost-right-blurred',
+    type: 'standalone',
+    className: 'layer mascot side',
+    sources: [source('ghost-right-blurred', '056_婚叫模糊_1.png')],
+  },
   ...mascotTangyuanLayout.map(({ name, sceneBox }) => ({
     name,
     type: 'standalone',
@@ -140,7 +146,7 @@ export const optimizedSceneGroups = {
   cake: layerRefs(['cake-table']),
   balloons: layerRefs(['balloons']),
   gifts: layerRefs(['gifts']),
-  ghost: layerRefs(['ghost-right']),
+  ghost: layerRefs(['ghost-right', 'ghost-right-blurred']),
   mascot: layerRefs(mascotTangyuanLayout.map(({ name }) => name)),
   fx: layerRefs(['glow', 'filter']),
 }

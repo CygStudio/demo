@@ -351,19 +351,34 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
         variants={groupVariants.ghost}
         onAnimationComplete={() => { if (showSequence) setGhostEntryDone(true) }}
       >
-        {optimizedCurtainSceneGroups.ghost.map((layer) => (
-          <motion.img
-            key={layer.name}
-            alt={layer.name}
-            className={ghostEntryDone ? 'ghost-blurred' : ''}
-            src={layer.src}
-            animate={
-              getLoopForLayer(layer.name)
-                ? { ...getLoopForLayer(layer.name), transition: { duration: getLoopForLayer(layer.name).duration, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' } }
-                : undefined
-            }
-          />
-        ))}
+        <motion.div
+          className="rcs-ghost-loop"
+          animate={{
+            y: loopMotion.ghost.y,
+            rotate: loopMotion.ghost.rotate,
+          }}
+          transition={{
+            duration: loopMotion.ghost.duration,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: 'easeInOut',
+          }}
+        >
+          {optimizedCurtainSceneGroups.ghost.map((layer) => {
+            const isBlurred = layer.name === 'ghost-right-blurred'
+            return (
+              <img
+                key={layer.name}
+                alt={layer.name}
+                className={
+                  isBlurred
+                    ? `ghost-blurred-img${ghostEntryDone ? ' is-active' : ''}`
+                    : 'ghost-sharp-img'
+                }
+                src={layer.src}
+              />
+            )
+          })}
+        </motion.div>
       </motion.div>
 
       {/* Light raster entrance overlay */}

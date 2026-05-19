@@ -33,6 +33,7 @@ export const layerBoxes = {
   ahoge: [1067, 60, 1130, 163],
   'left-arm': [1160, 380, 1469, 1265],
   'ghost-right': [1786, 785, 2192, 1255],
+  'ghost-right-blurred': [1781, 780, 2196, 1260],
   'mascot-cake': [921, 333, 1472, 574],
   glow: [0, 0, 2283, 1302],
   filter: [0, 0, 2283, 1302],

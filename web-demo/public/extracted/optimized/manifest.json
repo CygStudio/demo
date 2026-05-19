@@ -194,6 +194,26 @@
       }
     },
     {
+      "name": "ghost-right-blurred",
+      "type": "standalone",
+      "box": [
+        1781,
+        780,
+        2196,
+        1260
+      ],
+      "width": 415,
+      "height": 480,
+      "className": "layer mascot side",
+      "loop": null,
+      "activeFrame": null,
+      "frameNames": null,
+      "formats": {
+        "png": "extracted/optimized/ghost-right-blurred.png",
+        "webp": "extracted/optimized/ghost-right-blurred.webp"
+      }
+    },
+    {
       "name": "mascot-cake-1",
       "type": "standalone",
       "box": [

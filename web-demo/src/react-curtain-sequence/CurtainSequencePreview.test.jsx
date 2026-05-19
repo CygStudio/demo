@@ -123,7 +123,7 @@ describe('CurtainSequencePreview', () => {
     expect(screen.getByAltText('mascot-cake-4')).toBeInTheDocument()
     expect(screen.queryByAltText('mascot-cake')).not.toBeInTheDocument()
 
-    expect(document.querySelectorAll('.rcs-stage img')).toHaveLength(14)
+    expect(document.querySelectorAll('.rcs-stage img')).toHaveLength(15)
     expect(document.querySelectorAll('.rcs-group-mascot img')).toHaveLength(4)
     expect(document.querySelector('.rcs-expression-stack [role="img"]')).toHaveAccessibleName('expr-c')
     expect(document.querySelector('.rcs-group-character')).toBeInTheDocument()

@@ -9,7 +9,7 @@ import {
 
 describe('optimizedAssetSpec', () => {
   it('defines the approved optimized request budget', () => {
-    expect(optimizedAssetSpec).toHaveLength(15)
+    expect(optimizedAssetSpec).toHaveLength(16)
     expect(criticalOptimizedAssetNames).toEqual([
       'scene-base',
       'character-hair-back',
@@ -29,7 +29,7 @@ describe('optimizedAssetSpec', () => {
     expect(optimizedSceneGroups.cake.map((layer) => layer.name)).toEqual(['cake-table'])
     expect(optimizedSceneGroups.balloons.map((layer) => layer.name)).toEqual(['balloons'])
     expect(optimizedSceneGroups.gifts.map((layer) => layer.name)).toEqual(['gifts'])
-    expect(optimizedSceneGroups.ghost.map((layer) => layer.name)).toEqual(['ghost-right'])
+    expect(optimizedSceneGroups.ghost.map((layer) => layer.name)).toEqual(['ghost-right', 'ghost-right-blurred'])
     expect(optimizedSceneGroups.mascot.map((layer) => layer.name)).toEqual([
       'mascot-cake-1',
       'mascot-cake-2',

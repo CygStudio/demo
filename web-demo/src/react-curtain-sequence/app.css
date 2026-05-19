@@ -163,6 +163,11 @@ body {
   transform: translate(35%, 25%) translateZ(0);
 }
 
+.rcs-ghost-loop {
+  position: absolute;
+  inset: 0;
+}
+
 .rcs-ghost-viewport img {
   position: absolute;
   width: 100%;
@@ -170,11 +175,24 @@ body {
   object-fit: contain;
   pointer-events: none;
   user-select: none;
-  transition: filter 1.5s ease-in-out;
 }
 
-.rcs-ghost-viewport img.ghost-blurred {
-  filter: blur(3px);
+/* 模糊版圖片由美術師直接繪製，自帶 blur halo（原始 415×480 比清晰版 406×470 略大）。
+   以中心對齊放大，使其 halo 範圍正確顯示，而非被 object-fit: contain 縮回原本尺寸。 */
+.rcs-ghost-viewport .ghost-blurred-img {
+  width: calc(100% * 415 / 406);
+  height: calc(100% * 480 / 470);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  /* 入場完成後淡入：以圖片切換取代 CSS filter 動畫，
+     完全避開 Chromium Android 對 filter 動畫的 re-raster 白閃 bug */
+  transition: opacity 1.5s ease-in-out;
+}
+
+.rcs-ghost-viewport .ghost-blurred-img.is-active {
+  opacity: 1;
 }
 
 /* ─── Mobile / portrait optimizations ─── */
