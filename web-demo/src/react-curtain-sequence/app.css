@@ -165,7 +165,11 @@ body {
 
 .rcs-ghost-loop {
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  top: 12px;
+  bottom: 0;
+  height: 100%;
 }
 
 .rcs-ghost-viewport img {
