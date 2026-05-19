@@ -50,19 +50,20 @@ body {
 
 .rcs-ghost-viewport {
   position: absolute;
-  right: -50px;
-  bottom: -50px;
+  right: 30px;
+  bottom: 30px;
   width: clamp(300px, 21vw, 400px);
   aspect-ratio: 406 / 470;
   z-index: 20;
-  transform: translate(35%, 25%);
-  opacity: 1;
-  transition: opacity 600ms ease-out;
+  /* 25% overhang on both axes → 75% width & 75% height visible inside viewport. */
+  transform: translate(25%, 25%);
   pointer-events: none;
 }
 
-.rcs-ghost-viewport--hidden {
-  opacity: 0;
+.rcs-ghost-entry {
+  position: absolute;
+  inset: 0;
+  will-change: transform, opacity;
 }
 
 .rcs-ghost-loop {

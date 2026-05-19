@@ -426,21 +426,26 @@ export async function createPixiScene({
   canvas.addEventListener('webglcontextrestored', onContextRestored, false)
 
   // ---- Ticker
-  const startMs = performance.now()
-  let lastTickMs = startMs
+  let introStartMs = null
+  let lastTickMs = performance.now()
   let allIntrosDone = false
   let firstFrameNotified = false
   let followerEnabled = false
+
+  handle.startIntro = () => {
+    if (introStartMs !== null) return
+    introStartMs = performance.now()
+  }
 
   app.ticker.add(() => {
     if (handle.destroyed) return
     const now = performance.now()
     const dtMs = Math.min(now - lastTickMs, 64)
     lastTickMs = now
-    const elapsedMs = now - startMs
 
-    // Intros
-    if (!allIntrosDone) {
+    // Intros — only run after startIntro() is called (gated by light raster end)
+    if (!allIntrosDone && introStartMs !== null) {
+      const elapsedMs = now - introStartMs
       let pending = 0
       for (const intro of introState) {
         if (intro.done) continue
@@ -465,13 +470,16 @@ export async function createPixiScene({
       }
     }
 
+    // Loops drive off wall-clock for stable phase regardless of intro gating.
+    const loopMs = now
+
     // Loops
     for (const L of loops) {
       // skip fx loops in reduced mode
       if (reducedMode && (L.sprite.label === 'glow' || L.sprite.label === 'filter')) {
         continue
       }
-      const phaseTau = ((elapsedMs / L.durationMs) * TWO_PI + L.phase) % TWO_PI
+      const phaseTau = ((loopMs / L.durationMs) * TWO_PI + L.phase) % TWO_PI
       const sinW = Math.sin(phaseTau)
       const [left, top, right, bottom] = L.box
       const baseW = right - left
@@ -498,7 +506,7 @@ export async function createPixiScene({
         pointer: reducedMode ? null : handle.pointerScene,
         mode: followerState.mode,
         dtMs,
-        elapsedMs,
+        elapsedMs: loopMs,
         bounds: optimizedSceneBounds,
       })
       followerState = next

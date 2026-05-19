@@ -43,6 +43,7 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
   const [pixiReady, setPixiReady] = useState(false)
   const [introComplete, setIntroComplete] = useState(false)
   const [lightRasterDone, setLightRasterDone] = useState(false)
+  const [ghostEntered, setGhostEntered] = useState(false)
   const [ghostEntryDone, setGhostEntryDone] = useState(false)
   const [pixiError, setPixiError] = useState(null)
 
@@ -87,6 +88,13 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
     }
   }, [isReducedCompositing])
 
+  // ---- Trigger PIXI intros only after light raster overlay finishes ----
+  useEffect(() => {
+    if (!lightRasterDone) return undefined
+    sceneHandleRef.current?.startIntro?.()
+    return undefined
+  }, [lightRasterDone])
+
   // ---- Drive expression cycling from React (kept as canonical timer) ----
   useEffect(() => {
     if (!pixiReady) return undefined
@@ -99,11 +107,14 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
   // ---- Ghost entry timing (after scene-entry completes) ----
   useEffect(() => {
     if (!introComplete) {
+      setGhostEntered(false)
       setGhostEntryDone(false)
       return undefined
     }
-    // ghost group is the last to fade in inside PIXI; use sequence end as canonical
-    const timer = window.setTimeout(() => setGhostEntryDone(true), 800)
+    // Trigger ghost slide-in immediately after main scene intros finish.
+    setGhostEntered(true)
+    // Crossfade sharp → blurred after the entry settles (entry 1.6s + 0.8s hold).
+    const timer = window.setTimeout(() => setGhostEntryDone(true), 1400)
     return () => window.clearTimeout(timer)
   }, [introComplete])
 
@@ -133,40 +144,47 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
     >
       <div className="rcs-pixi-host" ref={pixiContainerRef} />
 
-      {/* Ghost: viewport-pinned (bottom-right). Two layered images, crossfade on entry-complete. */}
+      {/* Ghost: viewport-pinned (bottom-right). Outer wrapper handles entry slide,
+          inner motion.div handles continuous loop. Sharp → blurred crossfade once settled.
+          Entry direction mirrors original sequenceConfig (`x: +20, y: -32`):
+          starts upper-right, swoops down-left into rest position. */}
       {ghostReady && (
-        <div
-          className={[
-            'rcs-ghost-viewport',
-            !showSequence ? 'rcs-ghost-viewport--hidden' : '',
-          ].filter(Boolean).join(' ')}
-        >
+        <div className="rcs-ghost-viewport">
           <motion.div
-            className="rcs-ghost-loop"
-            animate={showSequence
-              ? { y: [0, -ghostLoopAmpY, 0], rotate: [0, ghostLoopAmpRotateDeg, 0] }
-              : { y: 0, rotate: 0 }}
-            transition={{
-              duration: loopMotion.ghost.duration,
-              repeat: Number.POSITIVE_INFINITY,
-              ease: 'easeInOut',
-            }}
+            className="rcs-ghost-entry"
+            initial={{ x: '35%', y: '-35%', opacity: 0 }}
+            animate={ghostEntered
+              ? { x: '0%', y: '0%', opacity: 1 }
+              : { x: '35%', y: '-35%', opacity: 0 }}
+            transition={{ duration: 1.8, ease: [0.22, 1, 0.36, 1] }}
           >
-            {optimizedCurtainSceneGroups.ghost.map((layer) => {
-              const isBlurred = layer.name === 'ghost-right-blurred'
-              return (
-                <img
-                  key={layer.name}
-                  alt={layer.name}
-                  className={
-                    isBlurred
-                      ? `ghost-blurred-img${ghostEntryDone ? ' is-active' : ''}`
-                      : 'ghost-sharp-img'
-                  }
-                  src={layer.src}
-                />
-              )
-            })}
+            <motion.div
+              className="rcs-ghost-loop"
+              animate={ghostEntered
+                ? { y: [0, -ghostLoopAmpY, 0], rotate: [0, ghostLoopAmpRotateDeg, 0] }
+                : { y: 0, rotate: 0 }}
+              transition={{
+                duration: loopMotion.ghost.duration,
+                repeat: Number.POSITIVE_INFINITY,
+                ease: 'easeInOut',
+              }}
+            >
+              {optimizedCurtainSceneGroups.ghost.map((layer) => {
+                const isBlurred = layer.name === 'ghost-right-blurred'
+                return (
+                  <img
+                    key={layer.name}
+                    alt={layer.name}
+                    className={
+                      isBlurred
+                        ? `ghost-blurred-img${ghostEntryDone ? ' is-active' : ''}`
+                        : 'ghost-sharp-img'
+                    }
+                    src={layer.src}
+                  />
+                )
+              })}
+            </motion.div>
           </motion.div>
         </div>
       )}

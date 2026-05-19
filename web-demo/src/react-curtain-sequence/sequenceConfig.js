@@ -1,10 +1,10 @@
 export const sequenceOrder = [
-  { key: 'character', delay: 0.2, duration: 2.7, blurFrom: 18, y: 24 },
-  { key: 'cake', delay: 1.5, duration: 2.1, blurFrom: 18, y: 36 },
-  { key: 'balloons', delay: 2.6, duration: 2.4, blurFrom: 18, y: 44 },
-  { key: 'gifts', delay: 3.8, duration: 2.1, blurFrom: 18, x: 40 },
-  { key: 'ghost', delay: 4.9, duration: 2.1, blurFrom: 18, x: 20, y: -32 },
-  { key: 'mascot', delay: 5.9, duration: 1.65, blurFrom: 18, scale: 1.08 },
+  { key: 'character', delay: 0.2, duration: 2.7, x: -120, y: 180, scale: 0.88 },
+  { key: 'cake', delay: 1.5, duration: 2.1, y: 260, scale: 0.85 },
+  { key: 'balloons', delay: 2.6, duration: 2.4, y: -220, scale: 0.9 },
+  { key: 'gifts', delay: 3.8, duration: 2.1, x: 240, y: 80, scale: 0.9 },
+  { key: 'ghost', delay: 4.9, duration: 2.1, x: 20, y: -32 },
+  { key: 'mascot', delay: 5.9, duration: 1.65, scale: 1.18 },
 ]
 
 export const loopMotion = {
