@@ -35,6 +35,17 @@ export const expressionAtlas = {
   ),
 }
 
+export const initialSceneSrcs = Array.from(
+  new Set(
+    [
+      ...Object.values(optimizedCurtainSceneGroups)
+        .flat()
+        .map((layer) => layer.src),
+      expressionAtlas.src,
+    ],
+  ),
+)
+
 export const optimizedMascotTangyuanMotionItems = optimizedCurtainSceneGroups.mascot.map((layer) => {
   const [left, top, right, bottom] = layer.box
 

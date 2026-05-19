@@ -4,8 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   BASE_W,
   BASE_H,
-  criticalOptimizedSrcs,
   expressionAtlas,
+  initialSceneSrcs,
   optimizedCurtainSceneGroups,
   optimizedMascotTangyuanMotionItems,
   optimizedSceneBounds,
@@ -21,9 +21,31 @@ import { useImagePreload } from './useImagePreload'
 
 const sequenceByKey = Object.fromEntries(sequenceOrder.map((item) => [item.key, item]))
 const sceneEntryCompleteMs = Math.max(...sequenceOrder.map(({ delay, duration }) => delay + duration)) * 1000
+const introWarmupMs = 32
+const lightRasterCompleteMs = 1700
+const compositingBoostDurationMs = introWarmupMs + lightRasterCompleteMs + sceneEntryCompleteMs
 
 function buildInitialTangyuanItems() {
   return createInitialFollowerItems(optimizedMascotTangyuanMotionItems)
+}
+
+function detectAndroidChromiumIframe() {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false
+
+  const userAgent = navigator.userAgent
+  const isAndroid = /Android/i.test(userAgent)
+  const isFirefox = /Firefox|FxiOS/i.test(userAgent)
+  const isChromiumFamily = /Chrome|Chromium|CriOS|EdgA|SamsungBrowser/i.test(userAgent)
+
+  let isEmbedded = false
+
+  try {
+    isEmbedded = window.self !== window.top
+  } catch {
+    isEmbedded = true
+  }
+
+  return isAndroid && isChromiumFamily && !isFirefox && isEmbedded
 }
 
 function buildEnterVariant(config) {
@@ -130,8 +152,8 @@ function ExpressionAtlas({ activeExpression, exitingExpression }) {
   )
 }
 
-function renderGroup(layers) {
-  return layers.map((layer) => <LayerImage key={layer.name} {...layer} />)
+function renderGroup(layers, { animateLoop = true } = {}) {
+  return layers.map((layer) => <LayerImage key={layer.name} animateLoop={animateLoop} {...layer} />)
 }
 
 const groupSceneClasses = {
@@ -144,10 +166,14 @@ const groupSceneClasses = {
 }
 
 export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) {
-  const criticalSrcs = useMemo(() => criticalOptimizedSrcs, [])
-  const { error: preloadError, ready: assetsReady } = useImagePreload(criticalSrcs)
+  const initialSceneImages = useMemo(() => initialSceneSrcs, [])
+  const { error: preloadError, ready: assetsReady } = useImagePreload(initialSceneImages)
+  const isReducedCompositing = useMemo(() => detectAndroidChromiumIframe(), [])
+  const [introReady, setIntroReady] = useState(false)
   const [lightRasterDone, setLightRasterDone] = useState(false)
-  const showSequence = assetsReady && lightRasterDone
+  const [entryCompositingActive, setEntryCompositingActive] = useState(false)
+  const shouldRenderScene = assetsReady
+  const showSequence = introReady && lightRasterDone
 
   const sequenceKey = 0
   const [pointer, setPointer] = useState({ x: 0, y: 0 })
@@ -179,6 +205,29 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
     }),
     [],
   )
+
+  useEffect(() => {
+    setIntroReady(false)
+    setLightRasterDone(false)
+    setGhostEntryDone(false)
+    setEntryCompositingActive(false)
+
+    if (!assetsReady) return void 0
+
+    setEntryCompositingActive(true)
+
+    const introTimer = window.setTimeout(() => {
+      setIntroReady(true)
+    }, introWarmupMs)
+    const boostTimer = window.setTimeout(() => {
+      setEntryCompositingActive(false)
+    }, compositingBoostDurationMs)
+
+    return () => {
+      window.clearTimeout(introTimer)
+      window.clearTimeout(boostTimer)
+    }
+  }, [assetsReady])
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -280,6 +329,8 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
   }, [showSequence])
 
   function handlePointerMove(event) {
+    if (isReducedCompositing) return
+
     const rect = event.currentTarget.getBoundingClientRect()
     const normalizedX = (event.clientX - rect.left) / rect.width - 0.5
     const normalizedY = (event.clientY - rect.top) / rect.height - 0.5
@@ -291,6 +342,11 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
   }
 
   function handlePointerLeave() {
+    if (isReducedCompositing) {
+      pointerSceneRef.current = null
+      return
+    }
+
     setPointer({ x: 0, y: 0 })
     pointerSceneRef.current = null
   }
@@ -298,88 +354,163 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
   return (
     <div
       className={`rcs-stage ${!showSequence ? 'rcs-stage--loading' : ''}`}
+      data-android-iframe={String(isReducedCompositing)}
       data-load-error={preloadError?.message ?? undefined}
       data-sequence-key={sequenceKey}
       data-testid="curtain-stage"
       onPointerLeave={handlePointerLeave}
       onPointerMove={handlePointerMove}
-      style={{ '--mx': pointer.x, '--my': pointer.y }}
+      style={{
+        '--mx': isReducedCompositing ? 0 : pointer.x,
+        '--my': isReducedCompositing ? 0 : pointer.y,
+      }}
     >
-      <motion.div className="rcs-stage-inner" initial={false} key={sequenceKey}>
-        {renderGroup(optimizedCurtainSceneGroups.background)}
+      {shouldRenderScene && (
+        <>
+          <motion.div
+            className={[
+              'rcs-stage-inner',
+              entryCompositingActive ? 'rcs-stage-inner--entry-boost' : '',
+              isReducedCompositing ? 'rcs-stage-inner--reduced-compositing' : '',
+            ].filter(Boolean).join(' ')}
+            initial={false}
+            key={sequenceKey}
+          >
+            {renderGroup(optimizedCurtainSceneGroups.background)}
 
-        <motion.div animate={showSequence ? 'visible' : 'hidden'} className={`rcs-group rcs-group-character ${groupSceneClasses.character}`} initial="hidden" variants={groupVariants.character}>
-          {renderGroup(optimizedCurtainSceneGroups.character)}
-          <div className="rcs-expression-stack">
-            <ExpressionAtlas
-              activeExpression={expressionTransitionState.active}
-              exitingExpression={expressionTransitionState.exiting}
-            />
-          </div>
-        </motion.div>
+            <motion.div
+              animate={showSequence ? 'visible' : 'hidden'}
+              className={[
+                'rcs-group',
+                'rcs-group-character',
+                groupSceneClasses.character,
+                entryCompositingActive ? 'rcs-group--entry-boost' : '',
+                isReducedCompositing ? 'rcs-group--reduced-compositing' : '',
+              ].filter(Boolean).join(' ')}
+              initial="hidden"
+              variants={groupVariants.character}
+            >
+              {renderGroup(optimizedCurtainSceneGroups.character)}
+              <div className="rcs-expression-stack">
+                <ExpressionAtlas
+                  activeExpression={expressionTransitionState.active}
+                  exitingExpression={expressionTransitionState.exiting}
+                />
+              </div>
+            </motion.div>
 
-        <motion.div animate={showSequence ? 'visible' : 'hidden'} className={`rcs-group rcs-group-cake ${groupSceneClasses.cake}`} initial="hidden" variants={groupVariants.cake}>
-          {renderGroup(optimizedCurtainSceneGroups.cake)}
-        </motion.div>
-        <motion.div animate={showSequence ? 'visible' : 'hidden'} className={`rcs-group rcs-group-balloons ${groupSceneClasses.balloons}`} initial="hidden" variants={groupVariants.balloons}>
-          {renderGroup(optimizedCurtainSceneGroups.balloons)}
-        </motion.div>
-        <motion.div animate={showSequence ? 'visible' : 'hidden'} className={`rcs-group rcs-group-gifts ${groupSceneClasses.gifts}`} initial="hidden" variants={groupVariants.gifts}>
-          {renderGroup(optimizedCurtainSceneGroups.gifts)}
-        </motion.div>
-        <motion.div animate={showSequence ? 'visible' : 'hidden'} className={`rcs-group rcs-group-mascot ${groupSceneClasses.mascot}`} initial="hidden" variants={groupVariants.mascot}>
-          {mascotTangyuanItems.map((layer) => (
-            <img
-              key={layer.name}
-              alt={layer.name}
-              className={`${layer.className} rcs-mascot-tangyuan`}
-              src={layer.src}
-              style={getScenePositionStyle(layer)}
-            />
-          ))}
-        </motion.div>
+            <motion.div
+              animate={showSequence ? 'visible' : 'hidden'}
+              className={[
+                'rcs-group',
+                'rcs-group-cake',
+                groupSceneClasses.cake,
+                entryCompositingActive ? 'rcs-group--entry-boost' : '',
+                isReducedCompositing ? 'rcs-group--reduced-compositing' : '',
+              ].filter(Boolean).join(' ')}
+              initial="hidden"
+              variants={groupVariants.cake}
+            >
+              {renderGroup(optimizedCurtainSceneGroups.cake)}
+            </motion.div>
+            <motion.div
+              animate={showSequence ? 'visible' : 'hidden'}
+              className={[
+                'rcs-group',
+                'rcs-group-balloons',
+                groupSceneClasses.balloons,
+                entryCompositingActive ? 'rcs-group--entry-boost' : '',
+                isReducedCompositing ? 'rcs-group--reduced-compositing' : '',
+              ].filter(Boolean).join(' ')}
+              initial="hidden"
+              variants={groupVariants.balloons}
+            >
+              {renderGroup(optimizedCurtainSceneGroups.balloons)}
+            </motion.div>
+            <motion.div
+              animate={showSequence ? 'visible' : 'hidden'}
+              className={[
+                'rcs-group',
+                'rcs-group-gifts',
+                groupSceneClasses.gifts,
+                entryCompositingActive ? 'rcs-group--entry-boost' : '',
+                isReducedCompositing ? 'rcs-group--reduced-compositing' : '',
+              ].filter(Boolean).join(' ')}
+              initial="hidden"
+              variants={groupVariants.gifts}
+            >
+              {renderGroup(optimizedCurtainSceneGroups.gifts)}
+            </motion.div>
+            <motion.div
+              animate={showSequence ? 'visible' : 'hidden'}
+              className={[
+                'rcs-group',
+                'rcs-group-mascot',
+                groupSceneClasses.mascot,
+                entryCompositingActive ? 'rcs-group--entry-boost' : '',
+                isReducedCompositing ? 'rcs-group--reduced-compositing' : '',
+              ].filter(Boolean).join(' ')}
+              initial="hidden"
+              variants={groupVariants.mascot}
+            >
+              {mascotTangyuanItems.map((layer) => (
+                <img
+                  key={layer.name}
+                  alt={layer.name}
+                  className={`${layer.className} rcs-mascot-tangyuan`}
+                  src={layer.src}
+                  style={getScenePositionStyle(layer)}
+                />
+              ))}
+            </motion.div>
 
-        {renderGroup(optimizedCurtainSceneGroups.fx)}
-      </motion.div>
+            {renderGroup(optimizedCurtainSceneGroups.fx, { animateLoop: !isReducedCompositing })}
+          </motion.div>
 
-      {/* Ghost positioned relative to viewport (bottom-right), PSD-proportional size, 80% visible */}
-      <motion.div
-        animate={showSequence ? 'visible' : 'hidden'}
-        className="rcs-ghost-viewport"
-        initial="hidden"
-        key={`ghost-${sequenceKey}`}
-        variants={groupVariants.ghost}
-        onAnimationComplete={() => { if (showSequence) setGhostEntryDone(true) }}
-      >
-        <motion.div
-          className="rcs-ghost-loop"
-          animate={{
-            y: loopMotion.ghost.y,
-            rotate: loopMotion.ghost.rotate,
-          }}
-          transition={{
-            duration: loopMotion.ghost.duration,
-            repeat: Number.POSITIVE_INFINITY,
-            ease: 'easeInOut',
-          }}
-        >
-          {optimizedCurtainSceneGroups.ghost.map((layer) => {
-            const isBlurred = layer.name === 'ghost-right-blurred'
-            return (
-              <img
-                key={layer.name}
-                alt={layer.name}
-                className={
-                  isBlurred
-                    ? `ghost-blurred-img${ghostEntryDone ? ' is-active' : ''}`
-                    : 'ghost-sharp-img'
-                }
-                src={layer.src}
-              />
-            )
-          })}
-        </motion.div>
-      </motion.div>
+          {/* Ghost positioned relative to viewport (bottom-right), PSD-proportional size, 80% visible */}
+          <motion.div
+            animate={showSequence ? 'visible' : 'hidden'}
+            className={[
+              'rcs-ghost-viewport',
+              entryCompositingActive ? 'rcs-ghost-viewport--entry-boost' : '',
+              isReducedCompositing ? 'rcs-ghost-viewport--reduced-compositing' : '',
+            ].filter(Boolean).join(' ')}
+            initial="hidden"
+            key={`ghost-${sequenceKey}`}
+            variants={groupVariants.ghost}
+            onAnimationComplete={() => { if (showSequence) setGhostEntryDone(true) }}
+          >
+            <motion.div
+              className="rcs-ghost-loop"
+              animate={{
+                y: loopMotion.ghost.y,
+                rotate: loopMotion.ghost.rotate,
+              }}
+              transition={{
+                duration: loopMotion.ghost.duration,
+                repeat: Number.POSITIVE_INFINITY,
+                ease: 'easeInOut',
+              }}
+            >
+              {optimizedCurtainSceneGroups.ghost.map((layer) => {
+                const isBlurred = layer.name === 'ghost-right-blurred'
+                return (
+                  <img
+                    key={layer.name}
+                    alt={layer.name}
+                    className={
+                      isBlurred
+                        ? `ghost-blurred-img${ghostEntryDone ? ' is-active' : ''}`
+                        : 'ghost-sharp-img'
+                    }
+                    src={layer.src}
+                  />
+                )
+              })}
+            </motion.div>
+          </motion.div>
+        </>
+      )}
 
       {/* Light raster entrance overlay */}
       <AnimatePresence>
@@ -393,21 +524,21 @@ export default function CurtainSequencePreview({ expressionIntervalMs = 3000 }) 
             <motion.div
               className="rcs-light-raster__beam rcs-light-raster__beam--1"
               initial={{ x: '-110%' }}
-              animate={assetsReady ? { x: '110%' } : { x: '-110%' }}
+              animate={introReady ? { x: '110%' } : { x: '-110%' }}
               transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
             />
             <motion.div
               className="rcs-light-raster__beam rcs-light-raster__beam--2"
               initial={{ x: '110%' }}
-              animate={assetsReady ? { x: '-110%' } : { x: '110%' }}
+              animate={introReady ? { x: '-110%' } : { x: '110%' }}
               transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
             />
             <motion.div
               className="rcs-light-raster__beam rcs-light-raster__beam--3"
               initial={{ x: '-110%' }}
-              animate={assetsReady ? { x: '110%' } : { x: '-110%' }}
+              animate={introReady ? { x: '110%' } : { x: '-110%' }}
               transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
-              onAnimationComplete={() => { if (assetsReady) setLightRasterDone(true) }}
+              onAnimationComplete={() => { if (introReady) setLightRasterDone(true) }}
             />
           </motion.div>
         )}

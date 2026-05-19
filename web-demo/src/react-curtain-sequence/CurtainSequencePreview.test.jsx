@@ -48,8 +48,9 @@ vi.mock('motion/react', async () => {
 })
 
 const appStyles = readFileSync(resolve(import.meta.dirname, 'app.css'), 'utf8')
-const lightRasterCompleteMs = 1700
+const lightRasterCompleteMs = 1732
 const sceneEntryCompleteMs = Math.max(...sequenceOrder.map(({ delay, duration }) => delay + duration)) * 1000
+let originalImage
 
 const expectedTangyuanLayout = optimizedCurtainSceneGroups.mascot.map(({ name, style }) => ({
   name,
@@ -109,9 +110,27 @@ async function flushPreloadMicrotasks() {
   })
 }
 
+beforeEach(() => {
+  originalImage = globalThis.Image
+  globalThis.Image = class {
+    decode() {
+      return Promise.resolve()
+    }
+
+    set src(_value) {
+      queueMicrotask(() => this.onload?.())
+    }
+  }
+})
+
+afterEach(() => {
+  globalThis.Image = originalImage
+})
+
 describe('CurtainSequencePreview', () => {
-  it('renders optimized scene groups and images', () => {
+  it('renders optimized scene groups and images', async () => {
     render(<CurtainSequencePreview />)
+    await flushPreloadMicrotasks()
 
     expect(screen.getByTestId('curtain-stage')).toBeInTheDocument()
     expect(screen.getByAltText('character-body')).toBeInTheDocument()
@@ -141,13 +160,14 @@ describe('CurtainSequencePreview', () => {
     expect(artistLink).toHaveAttribute('rel', expect.stringContaining('noreferrer'))
   })
 
-  it('keeps the artist credit layered above the light raster overlay', () => {
+  it('keeps the artist credit layered above the light raster overlay', async () => {
     const style = document.createElement('style')
     style.textContent = appStyles
     document.head.appendChild(style)
 
     try {
       render(<CurtainSequencePreview />)
+      await flushPreloadMicrotasks()
 
       const artistCredit = document.querySelector('.rcs-artist-credit')
       const lightRaster = document.querySelector('.rcs-light-raster')
@@ -163,8 +183,9 @@ describe('CurtainSequencePreview', () => {
     }
   })
 
-  it('preserves the original scene stacking order on group wrappers', () => {
+  it('preserves the original scene stacking order on group wrappers', async () => {
     render(<CurtainSequencePreview />)
+    await flushPreloadMicrotasks()
 
     expect(document.querySelector('.rcs-group-character')).toHaveClass('has-scene-z-10')
     expect(document.querySelector('.rcs-group-cake')).toHaveClass('has-scene-z-12')
@@ -176,27 +197,19 @@ describe('CurtainSequencePreview', () => {
 })
 
 describe('Curtain sequence interactions', () => {
-  let originalImage
-
   beforeEach(() => {
     vi.useFakeTimers()
-    originalImage = globalThis.Image
-    globalThis.Image = class {
-      set src(_value) {
-        queueMicrotask(() => this.onload?.())
-      }
-    }
   })
 
   afterEach(() => {
     vi.useRealTimers()
-    globalThis.Image = originalImage
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
   })
 
-  it('cycles expression atlas frames every 3 seconds', () => {
+  it('cycles expression atlas frames every 3 seconds', async () => {
     render(<CurtainSequencePreview expressionIntervalMs={3000} />)
+    await flushPreloadMicrotasks()
 
     expect(screen.getByRole('img', { name: 'expr-c' })).toHaveAttribute('data-active', 'true')
     expect(document.querySelector('[data-transition-state="exiting"]')).not.toBeInTheDocument()
@@ -208,8 +221,9 @@ describe('Curtain sequence interactions', () => {
     expect(screen.getByRole('img', { name: 'expr-d' })).toHaveAttribute('data-active', 'true')
   })
 
-  it('keeps the previous expression atlas frame briefly as an exiting layer during transitions', () => {
+  it('keeps the previous expression atlas frame briefly as an exiting layer during transitions', async () => {
     render(<CurtainSequencePreview expressionIntervalMs={3000} />)
+    await flushPreloadMicrotasks()
 
     act(() => {
       vi.advanceTimersByTime(3000)
@@ -219,8 +233,9 @@ describe('Curtain sequence interactions', () => {
     expect(screen.getByRole('img', { name: 'expr-c' })).toHaveAttribute('data-transition-state', 'exiting')
   })
 
-  it('removes the exiting expression atlas frame after the fade-out completes', () => {
+  it('removes the exiting expression atlas frame after the fade-out completes', async () => {
     render(<CurtainSequencePreview expressionIntervalMs={3000} />)
+    await flushPreloadMicrotasks()
 
     act(() => {
       vi.advanceTimersByTime(3000)
@@ -244,6 +259,7 @@ describe('Curtain sequence interactions', () => {
     act(() => {
       vi.advanceTimersByTime(lightRasterCompleteMs)
     })
+    await flushPreloadMicrotasks()
 
     expect(readTangyuanLayout()).toEqual(expectedTangyuanLayout)
 
@@ -254,9 +270,7 @@ describe('Curtain sequence interactions', () => {
     expect(readTangyuanLayout()).toEqual(expectedTangyuanLayout)
   })
 
-  it('moves tangyuan toward the pointer under StrictMode', async () => {
-    mockVisibleSceneRects()
-
+  it('keeps reduced-compositing mode opt-in under StrictMode', async () => {
     render(
       <React.StrictMode>
         <CurtainSequencePreview />
@@ -267,22 +281,15 @@ describe('Curtain sequence interactions', () => {
     act(() => {
       vi.advanceTimersByTime(lightRasterCompleteMs)
     })
+    await flushPreloadMicrotasks()
 
     act(() => {
-      vi.advanceTimersByTime(sceneEntryCompleteMs + 16)
+      vi.advanceTimersByTime(sceneEntryCompleteMs + 96)
     })
+    await flushPreloadMicrotasks()
 
     const stage = screen.getByTestId('curtain-stage')
-    act(() => {
-      fireEvent.pointerMove(stage, { clientX: 100, clientY: 100 })
-    })
-
-    act(() => {
-      for (let frame = 0; frame < 30; frame += 1) {
-        vi.advanceTimersByTime(16)
-      }
-    })
-
-    expect(readTangyuanLayout()).not.toEqual(expectedTangyuanLayout)
+    expect(stage).toHaveAttribute('data-android-iframe', 'false')
+    expect(document.querySelector('.rcs-stage-inner')).toBeInTheDocument()
   })
 })

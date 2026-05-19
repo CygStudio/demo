@@ -29,7 +29,10 @@ export function useImagePreload(srcs, { failOnError = true } = {}) {
 function preloadImage(src, failOnError) {
   return new Promise((resolve, reject) => {
     const img = new Image()
-    img.onload = resolve
+    img.decoding = 'async'
+    img.onload = () => {
+      void finalizeImagePreload({ failOnError, img, reject, resolve, src })
+    }
     img.onerror = () => {
       const error = new Error(`Unable to preload image: ${src}`)
       if (failOnError) reject(error)
@@ -37,4 +40,19 @@ function preloadImage(src, failOnError) {
     }
     img.src = src
   })
+}
+
+async function finalizeImagePreload({ failOnError, img, reject, resolve, src }) {
+  if (typeof img.decode !== 'function') {
+    resolve()
+    return
+  }
+
+  try {
+    await img.decode()
+    resolve()
+  } catch (error) {
+    if (failOnError) reject(new Error(`Unable to decode image: ${src}`, { cause: error }))
+    else resolve()
+  }
 }

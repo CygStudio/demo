@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   criticalOptimizedSrcs,
   expressionAtlas,
+  initialSceneSrcs,
   optimizedCurtainSceneGroups,
   optimizedLayerByName,
 } from './optimizedSceneData'
@@ -10,6 +11,12 @@ describe('optimizedSceneData', () => {
   it('exposes a five-image critical set', () => {
     expect(criticalOptimizedSrcs).toHaveLength(5)
     expect(criticalOptimizedSrcs.every((src) => src.includes('/extracted/optimized/'))).toBe(true)
+  })
+
+  it('exposes a deduplicated first-scene preload set', () => {
+    expect(initialSceneSrcs).toHaveLength(16)
+    expect(new Set(initialSceneSrcs).size).toBe(initialSceneSrcs.length)
+    expect(initialSceneSrcs.every((src) => src.includes('/extracted/optimized/'))).toBe(true)
   })
 
   it('maps generated assets into runtime scene groups', () => {

@@ -53,10 +53,9 @@ body {
   /* 將整個舞台合成範圍隔離：
      - isolation: isolate → mix-blend-mode 子層只與舞台內部混合，不被外層 backdrop 牽動
      - contain: paint → 限制 paint invalidation 範圍，filter 動畫不會擴散到兄弟層
-     - will-change: transform → 預先取得獨立的 GPU 合成層，避免 parallax 變動觸發 re-raster */
+     - will-change 僅在入場期短暫啟用，避免長時間佔住 GPU layer */
   isolation: isolate;
   contain: paint;
-  will-change: transform;
 
   /* Center BG region (not canvas) in viewport */
   transform:
@@ -88,8 +87,14 @@ body {
 .rcs-group {
   isolation: isolate;
   contain: paint;
+}
+
+.rcs-stage-inner--entry-boost {
+  will-change: transform;
+}
+
+.rcs-group--entry-boost {
   will-change: filter, transform;
-  transform: translateZ(0);
 }
 
 .rcs-stage img {
@@ -128,8 +133,6 @@ body {
   z-index: 6;
   mix-blend-mode: screen;
   opacity: .58;
-  will-change: transform;
-  transform: translateZ(0);
 }
 .balloons.back { z-index: 7; }
 .balloons.mid { z-index: 8; }
@@ -143,8 +146,11 @@ body {
 .fx {
   z-index: 18;
   mix-blend-mode: screen;
+}
+
+.rcs-group--entry-boost .light,
+.rcs-group--entry-boost .fx {
   will-change: transform;
-  transform: translateZ(0);
 }
 
 /* ─── Ghost: viewport-relative, PSD-proportional size, 80% visible ─── */
@@ -159,8 +165,11 @@ body {
   z-index: 20;
   isolation: isolate;
   contain: paint;
+  transform: translate(35%, 25%);
+}
+
+.rcs-ghost-viewport--entry-boost {
   will-change: filter, transform;
-  transform: translate(35%, 25%) translateZ(0);
 }
 
 .rcs-ghost-loop {
@@ -208,6 +217,20 @@ body {
 
   .rcs-ghost-viewport {
     /* width: clamp(120px, 18dvh, 240px); */
+  }
+
+  .rcs-stage-inner--reduced-compositing {
+    --parallax-px: 0px;
+  }
+
+  .rcs-group--reduced-compositing,
+  .rcs-ghost-viewport--reduced-compositing {
+    will-change: auto;
+  }
+
+  .rcs-group--reduced-compositing .light,
+  .rcs-group--reduced-compositing .fx {
+    will-change: auto;
   }
 }
 
